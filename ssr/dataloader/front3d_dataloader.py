@@ -1,6 +1,7 @@
 import os, sys
 sys.path.append(os.getcwd())
 import copy
+
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torch.utils.data
@@ -8,8 +9,8 @@ from torchvision import transforms
 import numpy as np
 import json, gzip
 from tqdm import tqdm
+
 from utils.sdf_util import *
-from utils.vis import *
 from utils.rend_util import load_rgb
 
 category_label_mapping = {
@@ -68,10 +69,6 @@ class Front3D_Recon_Dataset(Dataset):
         if self.mode == 'test':
             self.split = self.split[:2000]
 
-        if not self.config['data']['load_dynamic']:
-            # load all data firstly
-            self.__load_data()
-
         self.vis_mask_loss = self.config['loss']['vis_mask_loss']
 
         self.add_bdb3d_points = self.config['model']['ray_sampler']['add_bdb3d_points']
@@ -86,86 +83,6 @@ class Front3D_Recon_Dataset(Dataset):
 
     def __len__(self):
         return len(self.split)
-
-    def __load_data(self):
-        self.anno_dict = {}             # key: img_id,              value: all anno
-        self.cid_dict = {}              # key: jid,                 value: cid (mapping category id)
-        self.sdf_dict = {}              # key: (jid, scale_name),   value: SDF voxel
-        self.spacing_centroid_dict = {} # key: (jid, scale_name),   value: spacing, padding and centroid
-        jid_scale_list = []             # item: (jid, scale_name)   scale_name is object scale, because object SDF is different in different scale
-
-        print("loading prepare data")
-        for (imgid, objid, cname) in tqdm(self.split):         # imgid: path to image, objid: object order in image annotation, cname: category name
-            if imgid not in self.anno_dict:
-                img_path = os.path.join(self.config['data']['data_path'], imgid)
-                post_fix = img_path.split('.')[-1]      # avoid '.png' '.jpg' '.jpeg'
-                img_np = load_rgb(img_path)         # load image, batch must be tensors, numpy arrays, numbers, dicts or lists
-                # img_PIL = Image.open(img_path)          # PIL memory is less than numpy
-
-                anno_path = img_path.replace('rgb', 'annotation').replace(f'.{post_fix}', '.json')
-                with open(anno_path, 'r') as f:
-                    sequence = json.load(f)             # load annotation
-                
-                sequence['rgb_img'] = img_np
-
-                # load mask
-                mask_path = img_path.replace('rgb', 'mask').replace(f'.{post_fix}', '.npy.gz')           
-                with gzip.GzipFile(mask_path, 'r') as f:
-                    segm = np.load(f)                   # load full mask, later this is mask predicted by 2D mask branch
-                _, height, width = img_np.shape     # [C, H, W]
-                # width, height = img_PIL.size
-                segm = segm[100:100+height, 100:100+width, :]       # axis = 0 is height, axis = 1 is width
-                sequence['all_mask'] = segm             # all objects mask
-
-                if self.vis_mask_loss:          # load visible mask
-                    vis_mask_path = img_path.replace('rgb', 'segm').replace(f'.{post_fix}', '.npy.gz')
-                    with gzip.GzipFile(vis_mask_path, 'r') as f:
-                        vis_mask = np.load(f)
-                    sequence['vis_mask'] = vis_mask
-
-                if self.use_depth:
-                    # load depth
-                    depth_path = img_path.replace('rgb', 'depth').replace(f'.{post_fix}', '.npy.gz')
-                    with gzip.GzipFile(depth_path, 'r') as f:
-                        depth = np.load(f)
-                    sequence['depth'] = depth
-
-                if self.use_normal:
-                    # load normal
-                    normal_path = img_path.replace('rgb', 'normal').replace(f'.{post_fix}', '.npy.gz')
-                    with gzip.GzipFile(normal_path, 'r') as f:
-                        normal = np.load(f)
-                    sequence['normal'] = normal
-
-                self.anno_dict[imgid] = sequence
-
-            if self.use_sdf:
-                object_ind = objid
-                jid = sequence['obj_dict'][object_ind]['model_file_name'][0]        # ['xxxxxxxxx'], a list
-                scale = np.array(sequence['obj_dict'][object_ind]['obj_scale'])
-                scale_name = format(scale[0], '.6f') + '_' + format(scale[1], '.6f') + '_' + format(scale[2], '.6f')
-                jid_scale_list.append((jid, scale_name))
-
-                if jid not in self.cid_dict:
-                    self.cid_dict[jid] = category_label_mapping[cname]
-
-        if self.use_sdf:
-            jid_scale_list=list(set(jid_scale_list))
-            print("loading object SDF data")
-            for (jid, scale_name) in tqdm(jid_scale_list):
-                if (jid, scale_name) not in self.sdf_dict:
-                    spacing_path = os.path.join(self.config['data']['sdf_path'], jid, scale_name, 'spacing_centroid.json')
-                    sdf_path = os.path.join(self.config['data']['sdf_path'], jid, scale_name, 'voxels.npy.gz')
-                    with open(spacing_path, 'r') as f:
-                        spacing_dic = json.load(f)
-                    spacing = float(spacing_dic['spacing'])
-                    padding = float(spacing_dic['padding'])
-                    centroid = np.array(spacing_dic['centroid'])
-                    with gzip.GzipFile(sdf_path, 'r') as f:
-                        voxels = np.load(f)                                 # (R, R, R) -> dim0:x, dim1:y, dim2:z
-
-                    self.sdf_dict[(jid, scale_name)] = voxels
-                    self.spacing_centroid_dict[(jid, scale_name)] = (spacing, padding, centroid)
 
     def __getitem__(self, index):
         imgid, objid, cname = self.split[index]
@@ -234,7 +151,6 @@ class Front3D_Recon_Dataset(Dataset):
         camera_extrinsics = np.eye(4)
         camera_extrinsics[0:3, :] = camera_extrinsics_raw
 
-
         # an object full mask, obj_id is semantic id in front3d mask map; objid is object index in this image
         obj_id = sequence['obj_dict'][object_ind]['obj_id'][0]              # [xxx], a list
         segm = sequence['all_mask']
@@ -249,16 +165,10 @@ class Front3D_Recon_Dataset(Dataset):
         for full_index in segm_index:
             full_mask_array[full_index[0]*width + full_index[1]] = True
 
-
         # full bbox (get from full mask)
         xmin, xmax = int(np.min(py)), int(np.max(py))
         ymin, ymax = int(np.min(px)), int(np.max(px))
         full_bbox_2d = [xmin, ymin, xmax, ymax]
-
-        # ###### vis obj_map(object full mask)
-        # from PIL import Image
-        # im = Image.fromarray(obj_map*255)
-        # im.save('test.png')
 
         if self.vis_mask_loss:
             vis_mask = sequence['vis_mask']                 # [H, W]
@@ -267,7 +177,6 @@ class Front3D_Recon_Dataset(Dataset):
             vis_mask_index = np.argwhere(vis_mask == obj_id)
             for index in vis_mask_index:
                 vis_mask_array[index[0]*width + index[1]] = True
-
 
         # load 2D bbox, 3D bdb
         bdb_2d = np.array(full_bbox_2d)
@@ -282,7 +191,6 @@ class Front3D_Recon_Dataset(Dataset):
         obj_to_world[0:3, 3] = obj_tran
         world_to_obj = np.linalg.inv(obj_to_world)          # from world coords to obj coords
 
-        
         # set sample bound according to bbox3d_camera 
         bdb_3d_camera = np.array(sequence['obj_dict'][object_ind]['bbox3d_camera'])
 
@@ -348,7 +256,6 @@ class Front3D_Recon_Dataset(Dataset):
         # load object image
         image = sequence['rgb_img']             # [C, H, W]
         _, height, width = image.shape
-
 
         uv_sampling_idx = torch.tensor([xy[1]*width+xy[0] for xy in uv])              # img_H * W + img_W
 
@@ -446,7 +353,6 @@ class Front3D_Recon_Dataset(Dataset):
             else:                               # random add object bdb3d points
                 raise ValueError('not use surface points')
 
-
             if points.shape[0] < addpoints_total:
                 add_points_sampling_idx = np.random.permutation(points.shape[0])
                 for i in range((addpoints_total-1)//points.shape[0]):
@@ -461,7 +367,6 @@ class Front3D_Recon_Dataset(Dataset):
             add_points_world_flat = obj2world_numpy(add_points_flat, obj_rot, obj_tran)
             add_points_world = add_points_world_flat.reshape(100, addpoints_total // 100, 3)     # (100, addpoints_total // 100, 3), similar to ray 
             sample['add_points_world'] = add_points_world
-
 
         # use object bdb2d global feature
         if self.use_global_encoder:
@@ -480,8 +385,6 @@ class Front3D_Recon_Dataset(Dataset):
             cls_codes[cid] = 1
             sample['cls_encoder'] = cls_codes.astype(np.float32)
 
-
-        # return index, sample, data_dict
         return index, sample, ground_truth
 
 def worker_init_fn(worker_id):

@@ -43,10 +43,7 @@ class Evaluate:
         self.split = []
         if isinstance(self.classnames, list):
             raise ValueError('not support list, must be all_subset!!!')
-            for class_name in self.classnames:
-                self.split_path = os.path.join(self.cfg['split_path'], class_name + ".json")
-                with open(self.split_path, 'rb') as f:
-                    self.split += json.load(f)
+
         else:
             self.split_path = os.path.join(self.cfg['split_path'], self.classnames + ".json")
             with open(self.split_path, 'rb') as f:
@@ -122,8 +119,6 @@ class Evaluate:
         pred_cube_mesh_path = os.path.join(output_folder, 'pred_cube.ply')
         gt_cube_mesh_path = os.path.join(output_folder, 'label_cube.ply')
 
-        ## inst_inst
-        # add_opt = '-icp_scale'
         output_folder = os.path.join(output_folder, f'ssr_ssr_truth')
         os.makedirs(output_folder, exist_ok=True)
 
@@ -153,7 +148,6 @@ class Evaluate:
             pred_mesh.export(pred_mesh_path)
             gt_mesh.export(gt_mesh_path)
 
-            # cmd = f"{self.cmd_app} {pred_mesh_path} {gt_mesh_path} {align_mesh_path} {add_opt}"
             cmd = f"{self.cmd_app} {pred_mesh_path} {gt_mesh_path} {align_mesh_path}"
 
             ## align mesh use icp
@@ -212,7 +206,7 @@ if __name__ == '__main__':
         'result_dir':  os.path.join(exp_folder, 'out'),
         'split_path': f'./dataset/{dataset}/split/test',
         'data_path': eval_cfg['data']['data_path'],
-        'log': 'EvaluateLog_ssr_ssr2.txt',
+        'log': 'EvaluateLog.txt',
         'debug': True,
         'class_name': testset
     }

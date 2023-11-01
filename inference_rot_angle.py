@@ -1,6 +1,7 @@
 import os, time
 import argparse
 
+import cv2
 import torch
 from tqdm import tqdm
 

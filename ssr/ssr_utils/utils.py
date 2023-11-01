@@ -344,7 +344,6 @@ def load_device(cfg):
 def get_model(cfg,device):
     if cfg['method']=="ssr":
         from ssr.model.network import SSRNet
-        # model=SSRNet(cfg).to(device)
         model=SSRNet(cfg)
     else:
         raise NotImplementedError
@@ -371,9 +370,6 @@ def get_dataloader(cfg,mode):
     elif cfg['data']['dataset'] == 'SUNRGBD':
         from ssr.dataloader.sunrgbd_dataloader import SUNRGBD_Recon_dataloader
         dataloader=SUNRGBD_Recon_dataloader(cfg,mode)
-    # elif cfg['data']['dataset'] == 'REALIMG':         # use omni3d or im3d detector
-    #     from ssr.dataloader.realimg_dataloader import REALIMG_Recon_dataloader
-    #     dataloader=REALIMG_Recon_dataloader(cfg,mode)
     else:
         raise NotImplementedError
     return dataloader

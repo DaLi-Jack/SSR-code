@@ -1,20 +1,17 @@
 import os, sys
 sys.path.append(os.getcwd())
 import copy
+
+import cv2
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torch.utils.data
-from torchvision import transforms
-import pickle
-from PIL import Image
 import numpy as np
 import json, gzip
-import random
-from tqdm import tqdm
-from utils.sdf_util import *
-from utils.vis import *
-from utils.rend_util import load_rgb
+import skimage
 import imageio
+
+from utils.sdf_util import *
 
 category_label_mapping = {
     "table": 0, "sofa": 1, "wardrobe": 2, "tool": 3,
@@ -37,7 +34,7 @@ class Pix3d_Recon_Dataset(Dataset):
             self.resize_res = self.config['data']['resize_res']
         else:
             self.resize_res = None
-        # self.total_pixels = self.img_res[0] * self.img_res[1]
+
         self.mask_filter = self.config['data']['mask_filter']
         self.bdb2d_filter = self.config['data']['bdb2d_filter']
         self.soft_pixels = self.config['data']['soft_pixels']
@@ -47,9 +44,6 @@ class Pix3d_Recon_Dataset(Dataset):
             classnames = self.config['data']['train_class_name']        # val is in training time
         else:
             classnames = self.config['data']['test_class_name']
-        # # classnames is a list, all class will to reconstruct
-        # if not isinstance(classnames, list):
-        #     raise ValueError('classname must be List !')
         
         dataset_name = self.config['data']['dataset']       # now, just for front3d
         if isinstance(classnames, list):
@@ -144,7 +138,6 @@ class Pix3d_Recon_Dataset(Dataset):
                     [0, radio_h, 0],
                     [0, 0, 1]
                 ])
-
             
             sequence['rgb_img'] = img_np
 
@@ -181,7 +174,6 @@ class Pix3d_Recon_Dataset(Dataset):
 
             # category label
             cid = category_label_mapping[cname]
-
             object_ind = objid            # white means object, pix3d one image only have one object
 
             # camera pose (from camera to world)
@@ -203,7 +195,6 @@ class Pix3d_Recon_Dataset(Dataset):
             camera_extrinsics = np.eye(4)
             camera_extrinsics[0:3, :] = camera_extrinsics_raw
 
-
             segm = sequence['all_mask'][:, :, 0]
             segm_index = np.argwhere(segm == int(object_ind))
             px = [index[0] for index in segm_index]                 # height    uv[1]
@@ -211,31 +202,24 @@ class Pix3d_Recon_Dataset(Dataset):
             obj_map = np.zeros((height, width), dtype=np.uint8)
             obj_map[px, py] = 1
 
-
             full_mask_array = np.zeros(height*width, dtype=bool)         # [H*W, ]
             for full_index in segm_index:
                 full_mask_array[full_index[0]*width + full_index[1]] = True
-
 
             # full bbox
             xmin, xmax = int(np.min(py)), int(np.max(py))
             ymin, ymax = int(np.min(px)), int(np.max(px))
             full_bbox_2d = [xmin, ymin, xmax, ymax]
 
-
             if self.vis_mask_loss:
                 """
                 for pix3d, vis mask is full mask
                 """
-                # vis_mask = sequence['vis_mask']                 # [H, W]
-                # height, width = vis_mask.shape
                 vis_mask_array = np.zeros(height*width, dtype=bool)         # [H*W, ]
                 vis_mask_index = segm_index
-                # vis_mask_index = np.argwhere(vis_mask == obj_id)
                 for index in vis_mask_index:
                     vis_mask_array[index[0]*width + index[1]] = True
 
-            
             # load 2D bbox, 3D bdb
             bdb_2d = np.array(full_bbox_2d)
             bdb_3d = np.array(sequence['obj_dict'][object_ind]['bbox3d_world'])
@@ -339,7 +323,6 @@ class Pix3d_Recon_Dataset(Dataset):
 
             full_mask_pixel = full_mask_array[uv_sampling_idx]
             ground_truth['full_mask_pixel'] = torch.tensor(full_mask_pixel)
-
             
             if self.use_depth:
                 depth_gt = copy.deepcopy(sequence['depth'])         # [H, W]
@@ -351,7 +334,6 @@ class Pix3d_Recon_Dataset(Dataset):
                 depth_gt[depth_error_idx] = max(depth_gt)       # modify to maximum
 
                 ground_truth['depth'] = depth_gt
-
 
             if self.use_normal:
                 normal_gt = copy.deepcopy(sequence['normal'])       # [H, W, 3]
@@ -367,7 +349,6 @@ class Pix3d_Recon_Dataset(Dataset):
                 normal_gt = normal_gt[uv_sampling_idx]
 
                 ground_truth['normal'] = normal_gt * 2.0 - 1.0      # [0, 1] --> [-1, 1]
-
 
             if self.use_sdf:
                 ground_truth['voxel_sdf'] = np.expand_dims(voxels, axis=-1).transpose(3, 0, 1, 2)     # (1, R, R, R)      for F.grid_sample
@@ -408,7 +389,6 @@ class Pix3d_Recon_Dataset(Dataset):
                 else:                               # random add object bdb3d points
                     raise ValueError('not use surface points')
 
-
                 if points.shape[0] < addpoints_total:
                     add_points_sampling_idx = np.random.permutation(points.shape[0])
                     for i in range((addpoints_total-1)//points.shape[0]):
@@ -423,7 +403,6 @@ class Pix3d_Recon_Dataset(Dataset):
                 add_points_world_flat = obj2world_numpy(add_points_flat, obj_rot, obj_tran)
                 add_points_world = add_points_world_flat.reshape(100, addpoints_total // 100, 3)     # (100, addpoints_total // 100, 3), similar to ray 
                 sample['add_points_world'] = add_points_world
-
 
             # use object bdb2d global feature
             if self.use_global_encoder:
@@ -444,7 +423,6 @@ class Pix3d_Recon_Dataset(Dataset):
 
             success_flag=True
 
-        # return index, sample, data_dict
         return data_idx, sample, ground_truth
     
 

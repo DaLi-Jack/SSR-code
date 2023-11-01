@@ -31,8 +31,6 @@ class Attention_RoI_Module(nn.Module):
 
 
     def forward(self,img_feat,global_feat,bdb_grid):
-        # roi_feat=F.grid_sample(img_feat,bdb_grid,align_corners=True,mode='bilinear')
-        # roi_feat = self.pre_conv(roi_feat)
         roi_feat = self.pre_conv(img_feat)              # keep the same size
         if self.global_detach:
             global_feat=global_feat.detach()

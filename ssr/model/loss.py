@@ -165,10 +165,8 @@ class soft_L1(nn.Module):
 
     def forward(self, input, target, eps=0.0):
         ret = torch.abs(input - target) - eps
-        # ret = torch.clamp(ret, min=0.0, max=100.0)          # avoid torch.abs(input - target) < eps
         ret = torch.clamp(ret, min=0.0)          # avoid torch.abs(input - target) < eps
         return ret
-
 
     
 class MonoSDFLoss(nn.Module):
@@ -295,9 +293,7 @@ class MonoSDFLoss(nn.Module):
         else:                           # linear change
             return begin_weight + (end_weight - begin_weight) * (epoch - begin_epoch) / (end_epoch - begin_epoch)
 
-        
     def forward(self, model_outputs, ground_truth, epoch):
-
         ground_truth['world_to_obj'] = ground_truth['world_to_obj'].float().cuda()
         rgb_pred = model_outputs['rgb_values'].reshape(-1, self.num_pixels, 3)          # [B, Num_pixels, 3]
         rgb_gt = ground_truth['rgb'].cuda()
@@ -308,7 +304,6 @@ class MonoSDFLoss(nn.Module):
         else:
             vis_mask = torch.ones(rgb_pred.shape[0], rgb_pred.shape[1], dtype=bool).cuda()              # [B, Num_pixels]
         vis_mask = vis_mask.reshape(-1, self.num_pixels, 1)                             # [B, Num_pixels, 1]
-
 
         rgb_loss = self.get_rgb_loss(rgb_pred, rgb_gt, vis_mask)
         if self.use_curriculum_color:
@@ -372,9 +367,7 @@ class MonoSDFLoss(nn.Module):
             sdf_pred = model_outputs['sdf']
             sdf_pred = sdf_pred.reshape(-1, 1)
             # sdf loss
-            # sdf_pred = torch.clamp(sdf_pred, -0.5, 0.5)         # clamp sdf similar to DeepSDF
             sdf_loss = self.get_sdf_loss(sdf_pred, sdf_gt)
-
             vis_sdf_loss = self.get_sdf_loss(sdf_pred, sdf_gt)       # for log restore
             
             if self.add_bdb3d_points:       # add sdf loss of add points
@@ -408,11 +401,6 @@ class MonoSDFLoss(nn.Module):
             pred_mask = model_outputs['pred_mask']
             gt_mask = ground_truth['instance_mask'].cuda().to(torch.float32)
             gt_mask = F.interpolate(gt_mask, size=(pred_mask.shape[2], pred_mask.shape[3]), mode="nearest")
-            
-            # # test gt mask
-            # a = gt_mask[0].permute(1,2,0).cpu().numpy().squeeze(2)
-            # from PIL import Image
-            # Image.fromarray(a*255).show()
 
             instance_mask_loss = self.instance_mask_loss(pred_mask, gt_mask)
             output['instance_mask_loss'] = instance_mask_loss

@@ -140,11 +140,9 @@ class ErrorBoundSampler(RaySampler):
             # get obj coords
             points_obj = cam_loc_obj.unsqueeze(1) + samples.unsqueeze(2) * ray_dirs_obj.unsqueeze(1)            # samples: (B*N_uv, N_pts_per_ray), cam_loc_obj: (B*N_uv, 3), ray_dirs_obj: (B*N_uv, 3)
             points_obj = points_obj.reshape(-1, 3)
-                
 
             # Calculating the SDF only for the new sampled points
             with torch.no_grad():
-                
                 # transfer to cube coords
                 cube_coords = sdf_util.scene_obj2cube_coords(points_obj, model_input['scene_scale'], model_input['centroid'], model_input['none_equal_scale'])    # (B*N_uv*N_pts_per_ray, 3)
                 samples_sdf = model.implicit_network.get_sdf_vals(cube_coords, latent_feature, cat_feature)
@@ -154,7 +152,6 @@ class ErrorBoundSampler(RaySampler):
                 sdf = torch.gather(sdf_merge, 1, samples_idx).reshape(-1, 1)
             else:
                 sdf = samples_sdf
-
 
             # Calculating the bound d* (Theorem 1)
             d = sdf.reshape(z_vals.shape)
@@ -170,7 +167,6 @@ class ErrorBoundSampler(RaySampler):
             mask = ~first_cond & ~second_cond & (b + c - a > 0)
             d_star[mask] = (2.0 * torch.sqrt(area_before_sqrt[mask])) / (a[mask])
             d_star = (d[:, 1:].sign() * d[:, :-1].sign() == 1) * d_star  # Fixing the sign
-
 
             # Updating beta using line search
             curr_error = self.get_error_bound(beta0, model, sdf, z_vals, dists, d_star)

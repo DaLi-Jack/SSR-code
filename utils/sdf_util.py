@@ -2,6 +2,7 @@ import os
 import torch
 import numpy as np
 import torch.nn.functional as F
+
 from utils import rend_util
 
 
@@ -193,7 +194,6 @@ def get_sample_sdf(voxels_sdf, point_index):
     return samples                          # (N, C, D_out, H_out, W_out)
 
 
-
 def get_sdf_gt_objcoords(points, ground_truth):
     """
     get gt sdf
@@ -239,19 +239,6 @@ def get_sdf_gt_worldcoords(points, ground_truth):
     sdf_gt = get_sdf_gt_objcoords(obj_coords, ground_truth)
 
     return sdf_gt
-
-
-def get_sdf_loss(sdf_pred, sdf_gt):
-    """
-    get sdf loss in inference time
-    use L1 loss
-    :params sdf_pred, [N, 1]
-    :params sdf_gt, [N, 1]
-    """
-    L1_loss = torch.nn.L1Loss(reduction='mean')
-    sdf_loss = L1_loss(sdf_pred, sdf_gt)
-
-    return sdf_loss
 
 
 def vis_sdf(points_flat, points_sdf, mode):

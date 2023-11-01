@@ -1,12 +1,10 @@
+import os
+import time
+import datetime
+
 import torch
 from torch.utils.tensorboard import SummaryWriter
-import os
-import datetime
-import time
-import numpy as np
-import pickle
-import torch.nn as nn
-# torch.autograd.set_detect_anomaly(True)                 # if detect nan, report error
+
 from utils.rend_util import get_psnr
 
 def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,device,checkpoint):
@@ -78,11 +76,6 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
 
             '''gradient clip'''
             torch.nn.utils.clip_grad_norm(parameters=model.parameters(), max_norm=0.7, norm_type=2)
-            # for name, param in model.named_parameters():
-            #     print(f'name {name} grad_requirs {param.requires_grad}')
-            # for name, param in model.named_parameters():
-            #     if 'encoder' in name:
-            #         print(f'name {name} grad_requirs {param.requires_grad} grad {param.grad}')
             total_norm = 0
             parameters = [p for p in model.parameters() if p.grad is not None and p.requires_grad]
             for p in parameters:
@@ -114,7 +107,6 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
                 )
             cfg.log_string(msg)
 
-
             tb_logger.add_scalar('Loss/total_loss', total_loss.item(), iter)
             tb_logger.add_scalar('Loss/color_loss', loss_output['rgb_loss'].item(), iter)
             tb_logger.add_scalar('Loss/eikonal_loss', loss_output['eikonal_loss'].item(), iter)
@@ -136,10 +128,6 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
                 
             iter += 1
 
-            # del ground_truth
-            # del model_input
-            # torch.cuda.empty_cache()
-        
         # after model_save_interval epoch, evaluate the model
         if e % config['other']['model_save_interval'] == 0:
             model.eval()
@@ -194,10 +182,6 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
                         eval_loss_info[key] += torch.mean(loss_output[key]).item()
 
                 eval_loss += total_loss.item()
-
-                # del ground_truth
-                # del model_input
-                # torch.cuda.empty_cache()
             
             avg_eval_loss = eval_loss / (batch_id + 1)
             for key in eval_loss_info:
@@ -218,6 +202,3 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
                 min_eval_loss = avg_eval_loss
             else:
                 checkpoint.save("latest")
-
-            # del checkpoint
-            # torch.cuda.empty_cache()

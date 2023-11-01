@@ -125,6 +125,7 @@ def eval_normal_consistency(pred_mesh, gt_mesh, n_points=100000):
 
     return normals_correctness
 
+
 def parse_args():
     '''PARAMETERS'''
     parser = argparse.ArgumentParser('ssr inference')

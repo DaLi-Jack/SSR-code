@@ -1,16 +1,11 @@
 import os
-import copy
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import json
 import pickle
 from PIL import Image
-from PIL import ImageDraw
 import cv2
 import numpy as np
-import torch
-# from ssr.ssr_utils.bins import *
-from utils import rend_util
 from scipy import io
 
 
@@ -126,7 +121,6 @@ def R_from_yaw_pitch_roll(yaw, pitch, roll):
     return R
 
 
-
 class SUNRGBD_Recon_Dataset(Dataset):
     def __init__(self, config, mode):
         super(SUNRGBD_Recon_Dataset, self).__init__()
@@ -140,11 +134,9 @@ class SUNRGBD_Recon_Dataset(Dataset):
         with open(self.split_path, 'r') as f:
             self.split = json.load(f)
 
-
     def __len__(self):
         return len(self.split)
     
-
     def __getitem__(self, data_idx):
         success_flag=False
         while success_flag==False:
@@ -164,17 +156,10 @@ class SUNRGBD_Recon_Dataset(Dataset):
             camera_intrinsics = camera['K']
 
             bdb2D=boxes['bdb2D_pos'][object_id]
-            # ###### test bdb2D
-            # im = copy.deepcopy(image)
-            # draw = ImageDraw.Draw(im)
-            # draw.rectangle(bdb2D.tolist(), outline='red')
-            # im.show()
             
-
             cls_codes = np.zeros([9])
             cls_codes[front3d_category_label_mapping[category]] = 1
             
-
             size_reg=boxes['size_reg'][object_id]
             avg_size=sunrgbd_avgsize[boxes['size_cls'][object_id]]
             bbox_size=(1+size_reg)*avg_size*2
@@ -182,7 +167,6 @@ class SUNRGBD_Recon_Dataset(Dataset):
             none_equal_scale = (2.0 - padding) / bbox_size
             scene_scale = np.array([1.0, 1.0, 1.0])
             voxel_range = np.array([1.0, 1.0, 1.0])                          # voxel_range include padding : voxel_range is the range of voxel after none_equal_scale coords transfer
-
 
             pitch_cls,pitch_reg=camera['pitch_cls'],camera['pitch_reg']
             roll_cls,roll_reg=camera['roll_cls'],camera['roll_reg']
@@ -194,7 +178,6 @@ class SUNRGBD_Recon_Dataset(Dataset):
 
             yaw=yaw
             rot_matrix=R_from_yaw_pitch_roll(yaw,pitch,-roll)
-
 
             if self.config['data']['use_pred_pose']:
                 pred_pose_path=os.path.join(self.config['data']['pred_pose_path'],str(sequence['sequence_id']),"bdb_3d.mat")
@@ -220,7 +203,6 @@ class SUNRGBD_Recon_Dataset(Dataset):
                 #print(obj_cam_center)
                 rot_matrix=pred_rot_matrix
             
-
             delta2d = boxes['delta_2D'][object_id]
             project_center = np.zeros([2])
             project_center[0] = (bdb2D[0] + bdb2D[2]) / 2 - delta2d[0] * (bdb2D[2] - bdb2D[0])
@@ -229,7 +211,6 @@ class SUNRGBD_Recon_Dataset(Dataset):
             centroid_depth = np.mean(bin['centroid_bin'][centroid_cls]) + centroid_reg * DEPTH_WIDTH
             obj_cam_center=get_centroid_from_proj(centroid_depth, project_center, camera_intrinsics)
             
-
             rot_transfer_matrix = np.array([
                 [-1.0, 0.0, 0.0],
                 [0.0, 1.0, 0.0],
@@ -260,17 +241,13 @@ class SUNRGBD_Recon_Dataset(Dataset):
             obj_to_world[0:3, 3] = obj_tran
             world_to_obj = np.linalg.inv(obj_to_world)          # from world coords to obj coords
 
-
             # save bbox image
             bbox_img = cv2.cvtColor(sequence['rgb_img'], cv2.COLOR_RGB2BGR)
             cv2.rectangle(bbox_img, (int(bdb2D[0]), int(bdb2D[1])), (int(bdb2D[2]), int(bdb2D[3])), (255, 0, 0), 2)
-            # cv2.imwrite(f'bbox_{category}.png', bbox_img)
 
-            
             img_gt = sequence['rgb_img']
             img_gt = img_gt / 255.0
             img_gt = np.transpose(img_gt, (2, 0, 1))
-
 
             sample = {
                 "image": img_gt,
@@ -302,7 +279,6 @@ class SUNRGBD_Recon_Dataset(Dataset):
             uv = np.zeros((64, 2))
             sample["uv"] = uv
 
-
             ground_truth = {
                 'rgb': img_gt,
                 'split_name': split_name.split('.')[0],
@@ -319,9 +295,7 @@ class SUNRGBD_Recon_Dataset(Dataset):
 
             success_flag=True
 
-
         return data_idx, sample, ground_truth
-
 
 
 def worker_init_fn(worker_id):

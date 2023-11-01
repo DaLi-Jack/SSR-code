@@ -1,13 +1,16 @@
+import os
 import argparse
+
+import cv2
 import torch
 import torch.nn as nn
+
 from configs.config_utils import CONFIG
 from ssr.ssr_utils.utils import load_device, get_model, get_loss, \
     get_dataloader,CheckpointIO,get_trainer,get_optimizer,load_scheduler
 from ssr.ssr_utils.network_utils import fix_random_seed
 
 # for vscode debug error
-import cv2, os
 dirname = os.path.dirname(cv2.__file__)
 plugin_path = os.path.join(dirname, 'plugins', 'platforms')
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path

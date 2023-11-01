@@ -7,7 +7,6 @@ import torch.autograd.profiler as profiler
 import numpy as np
 
 
-
 def make_encoder(conf, **kwargs):
     enc_type = conf['encoder_type']  # spatial | global
     if enc_type == "spatial":
@@ -17,8 +16,6 @@ def make_encoder(conf, **kwargs):
     else:
         raise NotImplementedError("Unsupported encoder type")
     return net
-
-    
 
 class SpatialEncoder(nn.Module):
     """

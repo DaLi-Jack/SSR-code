@@ -1,7 +1,6 @@
 import os
 import yaml
 import logging
-from datetime import datetime
 
 
 def update_recursive(dict1, dict2):

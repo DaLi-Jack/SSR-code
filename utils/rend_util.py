@@ -1,9 +1,9 @@
 import numpy as np
 import imageio
 import skimage
-import cv2
 import torch
 from torch.nn import functional as F
+
 from utils import sdf_util
 
 
@@ -27,7 +27,6 @@ def load_rgb(path, normalize_rgb = False):
         img *= 2.
     img = img.transpose(2, 0, 1)        # [C, H, W]
     return img
-
 
 
 def get_camera_params_cam(uv, intrinsics, get_obj_dirs=False, model_input=None):
@@ -68,13 +67,8 @@ def get_camera_params_cam(uv, intrinsics, get_obj_dirs=False, model_input=None):
 
         ray_world = ray_world.permute(0, 2, 1)                              # [B, N, 3]
 
-
         ###### test ray_dirs_obj (get cam_loc_obj)
-        obj_tran = model_input['obj_tran']
         world_to_obj = model_input['world_to_obj']
-        # points_temp = pixel_points_cam.unsqueeze(2)                         # [B, N, 1, 3]
-        # points_obj = sdf_util.camera2obj(points_temp, pose, obj_rot, obj_tran)        # (B, N, 1, 3)
-        # points_obj = points_obj.reshape(batch_size, num_samples, 3)         # [B, N, 3]
 
         cam_loc_temp = cam_loc[:, None, None, :]                        # [B, 1, 1, 3]
         
@@ -82,18 +76,14 @@ def get_camera_params_cam(uv, intrinsics, get_obj_dirs=False, model_input=None):
 
         cam_loc_obj = sdf_util.world2obj(cam_loc_world, world_to_obj)              # (B, 1, 1, 3)
         
-        # cam_loc_obj = sdf_util.camera2obj(cam_loc_obj_temp, pose, world_to_obj)       # (B, 1, 1, 3)
         cam_loc_obj = cam_loc_obj.squeeze(2)                                # [B, 1, 3]
         cam_loc_obj = cam_loc_obj.squeeze(1)                                # [B, 3]
 
         cam_loc_world = cam_loc_world.squeeze(2)                                # [B, 1, 3]
         cam_loc_world = cam_loc_world.squeeze(1)                                # [B, 3]
 
-        # ray_dirs_obj = points_obj - cam_loc_obj
-        # ray_dirs_obj = F.normalize(ray_dirs_obj, dim=2)                     # [B, N, 3]
     else:
         return ray_dirs, cam_loc
-
 
     return ray_dirs, cam_loc, ray_obj, cam_loc_obj, ray_world, cam_loc_world
 
@@ -184,7 +174,6 @@ def world_to_camera(pnts, extrinsics):
     # because this is from world to camera
     # when from uv (image coords) to camera, need solve camera coords conflict in blender
 
-
     return pnts_cam                         # [B, 3, num_pixels*ray_points]
 
 
@@ -245,7 +234,6 @@ def get_uv_cam(pnts_cam, intrinsics):
     uv = uv.permute(0, 2, 1)                                            # [B, num_pixels*ray_points, 2]
 
     return uv
-
 
 
 def rot_angle(rot, axis, angle):

@@ -1,14 +1,11 @@
 import os
-import trimesh
 
 import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
-import copy
+import trimesh
 
-from .embed import get_embedder
-from .encoder import ImageEncoder
 from .resnet import resnet18_small_stride
 from .encoder import make_encoder
 from .mlp import ImplicitNetwork, RenderingNetwork
@@ -77,7 +74,6 @@ class SSRNet(torch.nn.Module):                                                 #
         if self.use_atten:
             self.post_op=Attention_RoI_Module(img_feat_channel=256, global_dim=256+9)
 
-
         conf_implicit = conf['model']['implicit_network']
         self.implicit_network = ImplicitNetwork(
             config=conf,                                    feature_vector_size=self.feature_vector_size,                   
@@ -103,7 +99,6 @@ class SSRNet(torch.nn.Module):                                                 #
         conf_ray_sampler = conf['model']['ray_sampler']
         self.take_sphere_intersection = conf_ray_sampler['take_sphere_intersection']
         self.add_bdb3d_points = conf_ray_sampler['add_bdb3d_points']
-
         
         self.sample_near = conf_ray_sampler['near']
         self.sample_far = conf_ray_sampler['far']
@@ -128,7 +123,6 @@ class SSRNet(torch.nn.Module):                                                 #
         else:
             raise ValueError('only support errorbounded or uniform!')
 
-
         self.use_instance_mask = conf['data']['use_instance_mask']
         if self.use_instance_mask:
             self.mask_decoder=nn.Sequential(
@@ -144,11 +138,7 @@ class SSRNet(torch.nn.Module):                                                 #
 
     
     def get_feature(self, input, uv, z_vals_pnts):
-        intrinsics = input["intrinsics"]
         image = input["image"]                              # [B, 3, H, W]
-        pose = input["pose"]                                # camera to world
-        extrinsics = input["extrinsics"]                    # world to camera
-
         self.image_shape = torch.empty(2).cuda()
         self.image_shape[0] = image.shape[-1]               # W
         self.image_shape[1] = image.shape[-2]               # H
@@ -176,7 +166,6 @@ class SSRNet(torch.nn.Module):                                                 #
             assert cat_feature.shape[1] == 256 + 9                          # must global_latent + cls_encoder
             ret_dict=self.post_op(self.encoder.latent, cat_feature, bdb_grid)
             roi_feat=ret_dict["roi_feat"]
-            atten_weight = ret_dict["channel_atten_weight"]
 
         if self.use_encoder:
             latent = self.encoder.index(
@@ -188,7 +177,6 @@ class SSRNet(torch.nn.Module):                                                 #
                 -1, self.latent_size
             )  # (B * N_ray, latent_size)
             latent_feature = latent                              ###### now, default use_encoder is True
-
 
         return latent_feature, cat_feature
 
@@ -253,7 +241,6 @@ class SSRNet(torch.nn.Module):                                                 #
             verts_world = np.concatenate(pnts_world_list, axis=0)
             verts_camera = np.concatenate(pnts_camera_list, axis=0)
 
-            
             if mesh_coords == 'canonical':
                 # in obj coordinate
                 meshcolor = trimesh.Trimesh(verts_obj, faces, normals, vertex_colors=vertex_colors)
@@ -272,7 +259,6 @@ class SSRNet(torch.nn.Module):                                                 #
             return meshcolor, meshnonecolor
 
 
-
         batch_size, num_pixels, _ = uv.shape
 
         self.image_shape = torch.empty(2).cuda()
@@ -283,7 +269,6 @@ class SSRNet(torch.nn.Module):                                                 #
         
         # encoder the image
         self.encoder(image)           # [B, latent_size, H', W']
-
 
         if self.use_global_encoder:
             bdb_grid = input["bdb_grid"].cuda().to(torch.float32)                                               # [B, 64, 64]
@@ -305,7 +290,6 @@ class SSRNet(torch.nn.Module):                                                 #
             assert cat_feature.shape[1] == 256 + 9                          # must global_latent + cls_encoder
             ret_dict=self.post_op(self.encoder.latent, cat_feature, bdb_grid)
             roi_feat=ret_dict["roi_feat"]
-            atten_weight = ret_dict["channel_atten_weight"]
 
         if self.use_instance_mask:
             if roi_feat is not None:
@@ -313,7 +297,6 @@ class SSRNet(torch.nn.Module):                                                 #
                 pred_mask = self.mask_decoder(bdb_roi_feat)                                                  # [B, 1, 64, 64]
             else:
                 pred_mask = self.mask_decoder(bdb_roi_feature)                                                  # [B, 1, 64, 64]
-
 
         if self.use_encoder:
             latent = self.encoder.index(
@@ -325,7 +308,6 @@ class SSRNet(torch.nn.Module):                                                 #
                 -1, self.latent_size
             )  # (B * N_ray, latent_size)
             latent_feature = latent                              ###### now, default use_encoder is True
-
 
         # get camera location and ray direction in camera coordinate
         ray_dirs, cam_loc, ray_dirs_obj, cam_loc_obj, ray_dirs_world, cam_loc_world = rend_util.get_camera_params_cam(uv, intrinsics, get_obj_dirs=True, model_input=input)
@@ -347,7 +329,6 @@ class SSRNet(torch.nn.Module):                                                 #
         cam_loc_world = repeat_interleave(cam_loc_world, num_pixels)
         ray_dirs_world = ray_dirs_world.reshape(-1, 3)
 
-
         if self.sampling_method == 'errorbounded':          # in canonical coords
             z_vals, z_samples_eik = self.ray_sampler.get_z_vals(ray_dirs_obj, cam_loc_obj, self, latent_feature, cat_feature, global_latent, uv, self.image_shape, input)        # z_vals: (B*N_uv, N_pts_per_ray)
         elif self.sampling_method == 'uniform':
@@ -356,14 +337,12 @@ class SSRNet(torch.nn.Module):                                                 #
             raise NotImplementedError
         N_samples = z_vals.shape[1]
 
-
         # get points in scene object coordinate
         points_obj = cam_loc_obj.unsqueeze(1) + z_vals.unsqueeze(2) * ray_dirs_obj.unsqueeze(1)         # canonical coordinate, [B*N_uv, N_pts_per_ray, 3]
         points_obj = points_obj.reshape(-1, 3)          # obj coords
 
         if self.ray_noise:
             points_obj = points_obj + (torch.rand_like(points_obj) - 0.5) * 0.01 
-
 
         # get points in world coordinate
         if self.show_rendering:
@@ -409,7 +388,6 @@ class SSRNet(torch.nn.Module):                                                 #
         else:
             weights, ray_mask = self.volume_rendering(z_vals, scale_sdf.reshape(-1, 1))
         rgb_values = torch.sum(weights.unsqueeze(-1) * rgb, 1)
-
 
         depth_values = torch.sum(weights * z_vals, 1, keepdims=True) / (weights.sum(dim=1, keepdims=True) +1e-8)        # pixel depth values
         depth_vals = z_vals             # points depth vals
@@ -466,7 +444,6 @@ class SSRNet(torch.nn.Module):                                                 #
             output['grad_theta'] = grad_theta[:grad_theta.shape[0]//2]
             output['grad_theta_nei'] = grad_theta[grad_theta.shape[0]//2:]
         
-        
         # gradient from obj coords to camera coords, gradient [N, 3]
         gradients = gradients.reshape(batch_size, -1, 3)                    # [B, N_uv*N_pts_per_ray, 3]
         rot1 = obj_rot
@@ -491,7 +468,6 @@ class SSRNet(torch.nn.Module):                                                 #
 
         output['normal_map'] = normal_map
 
-
         if self.add_bdb3d_points:
             add_points_world = input["add_points_world"].cuda().to(torch.float32)        # [B, N_uv, N_add, 3]
             add_latent_feature, add_cat_feature = rend_util.get_latent_feature(self, add_points_world, intrinsics, extrinsics, input)
@@ -505,7 +481,6 @@ class SSRNet(torch.nn.Module):                                                 #
 
             output['add_points_world'] = add_points_world
             output['add_sdf'] = add_sdf.reshape(-1, 1)
-
 
         return output
 
@@ -528,7 +503,6 @@ class SSRNet(torch.nn.Module):                                                 #
 
         return weights, ray_mask
     
-
     def fusion_volume_rendering(self, z_vals, sdf, batch_size):
         density_flat = self.density(sdf)
         density = density_flat.reshape(batch_size, -1, z_vals.shape[1])  # (batch_size, num_pixels, N_samples)
@@ -561,7 +535,6 @@ class SSRNet(torch.nn.Module):                                                 #
 
         return weights, sort_idx, cat_z_vals, ray_mask
 
-
     def cat_tensor(self, tensor):
         """
         :params tensor, [B, N_uv, N_pnts]
@@ -578,7 +551,6 @@ class SSRNet(torch.nn.Module):                                                 #
         """
         cat rgb and normal
         """
-
         rgb = rgb.reshape(batch_size, num_pixels, -1, 3)
         rgb = rgb.permute(1, 2, 0, 3)
         rgb = rgb.reshape(num_pixels, -1, 3)                    # cat rgb
@@ -595,6 +567,3 @@ class SSRNet(torch.nn.Module):                                                 #
         rgb = torch.cat((rgb_r, rgb_g, rgb_b), dim=-1)
 
         return rgb
-
-
-

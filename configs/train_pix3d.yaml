@@ -37,8 +37,8 @@ data:
     train: 64                      # pixels number for an image
     val: 64
     test: -1
-  use_depth: False                       # load depth
-  use_normal: False
+  use_depth: True                       # load depth
+  use_normal: True
   use_sdf: True
   use_instance_mask: False
   mask_filter:  False                    # use object full filter image, prior is higher than bdb2d_filter
