@@ -1,35 +1,27 @@
-import os,sys
-import pdb
-from IPython import embed
-#.path.append("/")
+import os, sys
 import numpy as np
+from datetime import datetime
 import trimesh
 import argparse
-import glob
-import pickle as p
 import torch
 import json
 import time
-import tempfile
-import shutil
 import subprocess
-# from net_utils.bins import *
-from tqdm import tqdm 
+from joblib import Parallel, delayed, parallel_backend
+import yaml
+
 sys.path.append(os.getcwd())
 from external.pyTorchChamferDistance.chamfer_distance import ChamferDistance
 from external.ldif.inference.metrics import f_score
-from joblib import Parallel, delayed, parallel_backend
 import multiprocessing as mp
 dist_chamfer=ChamferDistance()
-import pickle
-from datetime import datetime
-import yaml
+
 from ssr.ssr_utils.network_utils import fix_random_seed
 
 
 class Evaluate:
     def __init__(self, config, render=None):
-        self.cfg = config 
+        self.cfg = config
         self.logfile = os.path.join(self.cfg['result_dir'], self.cfg['log'])
         self.cd_loss_dict = {}
         self.f_score_dict = {}
@@ -39,15 +31,14 @@ class Evaluate:
         self.loginfo = []
         self.get_files()
         # self.tqbar = tqdm(total=len(self.split), desc='ssr evaluate:')
-        
-        self.render = render 
-        
+
+        self.render = render
+
     def show(self, data):
         if self.render is not None:
             self.render.show(data)
             self.render.clear()
-        
-        
+
     def get_files(self):
         self.split = []
         if isinstance(self.classnames, list):
@@ -68,7 +59,7 @@ class Evaluate:
             else:
                 self.split = split
         print('load {} test items'.format(len(self.split)))
-    
+
     def calculate_cd(self, pred, label):
         pred_sample_points=pred.sample(10000)
         gt_sample_points=label.sample(10000)
@@ -79,9 +70,8 @@ class Evaluate:
         cd_loss=torch.mean(dist1)+torch.mean(dist2)
         return cd_loss.item()*1000, f
 
-    
     def get_result(self):
-        total_cd = 0 
+        total_cd = 0
         total_number = 0
         total_score = 0
         for key in self.cd_loss_dict:
@@ -100,7 +90,7 @@ class Evaluate:
         msg = "cd/fscore loss of mean %f/%f"%(mean_cd, mean_f_score)
         print(msg)
         self.loginfo.append(msg)
-        
+
         with open(self.logfile, 'a') as f:
             currentDateAndTime = datetime.now()
             time_str = currentDateAndTime.strftime('%D--%H:%M:%S')
@@ -108,10 +98,10 @@ class Evaluate:
             f.write(time_str + '\n')
             for info in self.loginfo:
                 f.write(info + "\n")
-    
+
     def run_in_one(self, index):
         data = self.split[index]
-        img_id, obj_id, classname = data 
+        img_id, obj_id, classname = data
 
         # load truth size
         img_path = os.path.join(self.cfg['data_path'], img_id)
@@ -127,28 +117,25 @@ class Evaluate:
             sequence = json.load(f)             # load annotation
         size = np.array(sequence['obj_dict'][obj_id]['half_length'])
 
-
         img_id = img_id.split('/')[-1].split('.')[0]
         output_folder = os.path.join(self.cfg['result_dir'], classname, f'{str(img_id)}_{str(obj_id)}')
         pred_cube_mesh_path = os.path.join(output_folder, 'pred_cube.ply')
         gt_cube_mesh_path = os.path.join(output_folder, 'label_cube.ply')
 
-        
         ## inst_inst
         # add_opt = '-icp_scale'
         output_folder = os.path.join(output_folder, f'ssr_ssr_truth')
         os.makedirs(output_folder, exist_ok=True)
-        
 
-        align_mesh_path = os.path.join(output_folder, 'align.ply')  
+        align_mesh_path = os.path.join(output_folder, 'align.ply')
         if not os.path.exists(pred_cube_mesh_path):
             print(pred_cube_mesh_path)
             self.loginfo.append(f'pred: {pred_cube_mesh_path} is not exist!')
-            return 
+            return
         if not os.path.exists(gt_cube_mesh_path):
             print(gt_cube_mesh_path)
             self.loginfo.append(f'pred: {gt_cube_mesh_path} is not exist!')
-            return 
+            return
         if classname not in self.cd_loss_dict.keys():
             self.cd_loss_dict[classname]=[]
         if classname not in self.f_score_dict.keys():
@@ -165,11 +152,11 @@ class Evaluate:
             gt_mesh_path = os.path.join(output_folder, 'gt.ply')
             pred_mesh.export(pred_mesh_path)
             gt_mesh.export(gt_mesh_path)
-            
+
             # cmd = f"{self.cmd_app} {pred_mesh_path} {gt_mesh_path} {align_mesh_path} {add_opt}"
             cmd = f"{self.cmd_app} {pred_mesh_path} {gt_mesh_path} {align_mesh_path}"
-            
-            ## align mesh use icp 
+
+            ## align mesh use icp
             if os.path.exists(align_mesh_path):
                 subprocess.check_output(cmd, shell=True)
             try:
@@ -177,7 +164,7 @@ class Evaluate:
             except:
                 subprocess.check_output(cmd, shell=True)
                 align_mesh = trimesh.load(align_mesh_path)
-            ## calculate the cd 
+            ## calculate the cd
             cd_loss, fscore = self.calculate_cd(align_mesh, gt_mesh)
         else:
             with open(os.path.join(output_folder, 'cd.txt'), 'r') as f:
@@ -193,18 +180,19 @@ class Evaluate:
             f.write(str(fscore))
         print(msg)
         self.loginfo.append(msg)
-        
 
     def run(self):
         for index, data in enumerate(self.split):
             self.run_in_one(index)
         self.get_result()
 
+
 def parse_args():
     '''PARAMETERS'''
     parser = argparse.ArgumentParser('ssr evaluate')
     parser.add_argument('--config', type=str, required=True, help='configure file for training or testing.')
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     fix_random_seed(seed=1029)
@@ -229,7 +217,7 @@ if __name__ == '__main__':
         'class_name': testset
     }
     evaluate = Evaluate(config)
-    
+
     t1 = time.time()
     mp.set_start_method('spawn')
     with parallel_backend('multiprocessing', n_jobs=4):

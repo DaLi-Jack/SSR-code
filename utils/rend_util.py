@@ -331,6 +331,3 @@ def trans_camera_pose(pose, x_dist, y_dist, z_dist):
     new_pose[:3, 3] = new_trans
 
     return new_pose
-
-
-

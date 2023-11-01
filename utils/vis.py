@@ -64,7 +64,7 @@ def apply_mask(rgb_obs, mask, alpha=0.5):
         rgb_img[:, :, c] = np.where(mask == 1,
                                   rgb_img[:, :, c] * (1 - alpha) + alpha * color_ratio * 255,
                                   rgb_img[:, :, c])
-    
+
     return Image.fromarray(rgb_img)
 
 
@@ -83,6 +83,7 @@ def plot_depth_map(depth_path, save_path):
     im_color=cv2.applyColorMap(cv2.convertScaleAbs(depth,alpha=15),cv2.COLORMAP_JET)
     img = Image.fromarray(im_color)
     img.save(save_path)
+
 
 def plot_normal_map(normal_path, save_path):
     with gzip.GzipFile(normal_path, 'r') as f:

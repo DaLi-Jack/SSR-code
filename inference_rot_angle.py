@@ -1,28 +1,25 @@
-import argparse
 import os, time
-from configs.config_utils import CONFIG
+import argparse
+
 import torch
-import numpy as np
-from PIL import Image
 from tqdm import tqdm
-import imageio
-import random
-import json
 
 from utils import rend_util
 from utils.plots import *
+from configs.config_utils import CONFIG
+from ssr.ssr_utils.utils import load_device, get_model, get_dataloader, CheckpointIO, load_checkpoint
 
 dirname = os.path.dirname(cv2.__file__)
 plugin_path = os.path.join(dirname, 'plugins', 'platforms')
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 
-from ssr.ssr_utils.utils import load_device, get_model, get_dataloader, CheckpointIO, load_checkpoint
 
 def parse_args():
     '''PARAMETERS'''
     parser = argparse.ArgumentParser('ssr inference')
     parser.add_argument('--config', type=str, required=True, help='configure file for training or testing.')
     return parser.parse_args()
+
 
 def run(cfg):
     torch.set_default_dtype(torch.float32)
@@ -45,10 +42,6 @@ def run(cfg):
     checkpoint.register_modules(net=model)
 
     cfg.log_string('Loading weight.')
-    # # checkpoint.load(config["weight"])
-    # pretrained_weight = torch.load(config['weight'])
-    # model.load_state_dict(pretrained_weight['net'])
-    # load_checkpoint(config['weight'], model)
     ckpt_path = os.path.join(evals_folder_name, config['weight'])
     load_checkpoint(ckpt_path, model)
 
@@ -85,17 +78,12 @@ def run(cfg):
     angle_list = [-40, 0, 40]
 
     for angle_idx in range(len(angle_list)):
-
         angle = angle_list[angle_idx]
-
-
         for batch_id, (indices, model_input, ground_truth) in enumerate(infer_loader):
             img_id = ground_truth['img_id'][0].split('.')[0].split('/')[-1]
             obj_id = ground_truth['object_id'][0].numpy()
             cname = ground_truth['cname'][0]
             print(img_id)
-            # output_id_dir = os.path.join(evals_output_name, img_id)
-            # os.makedirs(output_id_dir, exist_ok=True)
             model_input["image"] = model_input["image"].cuda().to(torch.float32)
             model_input["intrinsics"] = model_input["intrinsics"].cuda().to(torch.float32)      # cpu -> gpu
             model_input["uv"] = model_input["uv"].cuda().to(torch.float32)                      # [B, N, 2]
@@ -108,14 +96,12 @@ def run(cfg):
             model_input['none_equal_scale'] = model_input['none_equal_scale'].cuda().to(torch.float32)
             model_input['scene_scale'] = model_input['scene_scale'].cuda().to(torch.float32)
             model_input['voxel_range'] = model_input['voxel_range'].cuda().to(torch.float32)
-            
+
             batch_size, num_samples, _ =  model_input["uv"].shape
             total_pixels = min(total_pixels, num_samples)                        # if mask filter, although there is not pixel sample, num_samples is less than total pixels
 
-
             mesh_folder = os.path.join(evals_output_name, cname, f'{str(img_id)}_{str(obj_id)}')
             os.makedirs(mesh_folder, exist_ok=True)
-
 
             # not export mesh, only render images
             images_dir = '{0}/rendering'.format(mesh_folder)
@@ -125,13 +111,11 @@ def run(cfg):
             normal_dir = '{0}/normal'.format(mesh_folder)
             os.makedirs(normal_dir, exist_ok=True)
 
-
             # check exist
             check_path = '{0}/eval_000_fusion_{1}.png'.format(normal_dir, angle)
             if os.path.exists(check_path):
                 print(f'{img_id}_{obj_id} {angle} exist')
                 continue
-
 
             pose = model_input['pose']
 
@@ -142,7 +126,6 @@ def run(cfg):
                 # rot one obj
                 new_obj_camera_pose = rend_util.rot_camera_pose(pose[obj_idx], total_bbox, angle, 'y')
                 pose[obj_idx] = new_obj_camera_pose
-
 
             render_poses = []
             render_poses.append(pose)
@@ -173,10 +156,6 @@ def run(cfg):
                 ray_mask = model_outputs['ray_mask'].reshape(batch_size, num_samples, 1)
 
                 depth_eval = depth_eval * ray_mask
-                
-                # # test vis mask
-                # vis_mask = ground_truth['vis_pixel'].unsqueeze(2).cuda()
-                # rgb_eval = (rgb_eval * vis_mask).detach()
 
                 # plot rendering images and gt
                 img, rgb_map, rgb_map_temp = plot_images(rgb_eval, ground_truth['rgb'], path=evals_folder_name, epoch=0, img_res=img_res, indices=indices, ray_mask=ray_mask)
@@ -191,12 +170,11 @@ def run(cfg):
                 # plot normal images and gt
                 normal_gt = (ground_truth['normal'].cuda() + 1.0) / 2.0
                 normal_pred = (normal_eval + 1.0) / 2.0             # from [-1, 1] to [0, 1]
-                
+
                 normal_gt_map, normal_map = plot_normal_maps(normal_pred, normal_gt, path=evals_folder_name, epoch=0, img_res=img_res, indices=indices, ray_mask=ray_mask)
                 normal_gt_map.save('{0}/eval_{1}_gt_{2}.png'.format(normal_dir,'%03d' % render_id, angle))
                 normal_map.save('{0}/eval_{1}_fusion_{2}.png'.format(normal_dir,'%03d' % render_id, angle))
 
-        
     cfg.log_string('Inference finished.')
 
 if __name__=="__main__":

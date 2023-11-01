@@ -1,6 +1,7 @@
 import os
 import psutil
 
+
 def get_gpu_mem_info(gpu_id=0):
     """
     show gpu memory  (MB)

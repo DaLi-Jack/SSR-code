@@ -1,21 +1,16 @@
-import argparse
 import os, time
-from configs.config_utils import CONFIG
-import torch
-import numpy as np
-from PIL import Image
-from tqdm import tqdm
-import imageio
-import random
+import argparse
 
-from utils import rend_util
+import torch
+
 from utils.plots import *
+from configs.config_utils import CONFIG
+from ssr.ssr_utils.utils import load_device, get_model, get_dataloader, CheckpointIO, load_checkpoint
 
 dirname = os.path.dirname(cv2.__file__)
 plugin_path = os.path.join(dirname, 'plugins', 'platforms')
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 
-from ssr.ssr_utils.utils import load_device, get_model, get_dataloader, CheckpointIO, load_checkpoint
 
 def parse_args():
     '''PARAMETERS'''
@@ -44,10 +39,6 @@ def run(cfg):
     checkpoint.register_modules(net=model)
 
     cfg.log_string('Loading weight.')
-    # # checkpoint.load(config["weight"])
-    # pretrained_weight = torch.load(config['weight'])
-    # model.load_state_dict(pretrained_weight['net'])
-    # load_checkpoint(config['weight'], model)
     ckpt_path = os.path.join(evals_folder_name, config['weight'])
     load_checkpoint(ckpt_path, model)
 
@@ -59,8 +50,6 @@ def run(cfg):
     img_res = config['data']['img_res']
     if img_res == 'None':
         img_res = config['data']['resize_res']
-    total_pixels = img_res[0] * img_res[1]
-    split_n_pixels = config['eval']['split_n_pixels']
 
     total_number = infer_loader.dataset.__len__()
 
@@ -74,17 +63,14 @@ def run(cfg):
         mesh_coords = 'camera'
     else:
         mesh_coords = config['eval']['mesh_coords']
-    
+
     for batch_id, (indices, model_input, ground_truth) in enumerate(infer_loader):
         img_id = ground_truth['split_name'][0]
         obj_id = ground_truth['object_id'][0].numpy()
         cname = ground_truth['category'][0]
         print(img_id)
-        # output_id_dir = os.path.join(evals_output_name, img_id)
-        # os.makedirs(output_id_dir, exist_ok=True)
         model_input["image"] = model_input["image"].cuda().to(torch.float32)
         model_input["intrinsics"] = model_input["intrinsics"].cuda().to(torch.float32)      # cpu -> gpu
-        # model_input["uv"] = model_input["uv"].cuda().to(torch.float32)                      # [B, N, 2]
         model_input['pose'] = model_input['pose'].cuda().to(torch.float32)
         model_input['extrinsics'] = model_input['extrinsics'].cuda().to(torch.float32)
         model_input['obj_rot'] = model_input['obj_rot'].cuda().to(torch.float32)
@@ -94,27 +80,17 @@ def run(cfg):
         model_input['none_equal_scale'] = model_input['none_equal_scale'].cuda().to(torch.float32)
         model_input['scene_scale'] = model_input['scene_scale'].cuda().to(torch.float32)
         model_input['voxel_range'] = model_input['voxel_range'].cuda().to(torch.float32)
-        
-        # batch_size, num_samples, _ =  model_input["uv"].shape
-        # total_pixels = min(total_pixels, num_samples)                        # if mask filter, although there is not pixel sample, num_samples is less than total pixels
 
         if extract_mesh:
-            # grid_boundary = ground_truth['bdb_3d'][0]                       # just one object
             mesh_folder = os.path.join(evals_output_name, cname, f'{str(img_id)}_{str(obj_id)}')
             os.makedirs(mesh_folder, exist_ok=True)
 
             bbox_img = ground_truth['bbox_img'][0].numpy()
             cv2.imwrite(os.path.join(mesh_folder, f'bbox_{cname}.png'), bbox_img)
 
-
-            # if os.path.exists(os.path.join(mesh_folder, f'pred.ply')):
-            #     msg = 'continue {}/{}'.format(batch_id, total_number)
-            #     print(msg)
-
-            # else:
             mesh = get_surface_sliding(
                 path="", epoch="",
-                model=model, img=model_input["image"], 
+                model=model, img=model_input["image"],
                 intrinsics=model_input["intrinsics"],
                 extrinsics=model_input["extrinsics"],
                 model_input=model_input,
@@ -133,21 +109,18 @@ def run(cfg):
                 except:
                     cfg.log_string(f'{str(img_id)}_{str(obj_id)} pred mesh failed!')
                     continue
-            
+
         # for visualization, export mesh with color and in original size of object
         if export_color_mesh:
             meshcolor, meshnonecolor = model(model_input, indices, mesh=mesh, mesh_coords=mesh_coords)          # mesh coords: camera, world, canonical(default)
-            # meshcolor.show()
-            # meshcolor.export('{0}/scan{1}_{2}.ply'.format(mesh_folder, img_id + '_color', model_input['objid'][0]), 'ply')
-            meshcolor.export(os.path.join(mesh_folder, f'mesh_color.ply'))              # original size
-            meshnonecolor.export(os.path.join(mesh_folder, f'mesh_none_color.ply'))     # original size
-
+            meshcolor.export(os.path.join(mesh_folder, 'mesh_color.ply'))              # original size
+            meshnonecolor.export(os.path.join(mesh_folder, 'mesh_none_color.ply'))     # original size
             cfg.log_string('mesh export successfully!')
 
         cfg.log_string(f'inference {batch_id}/{total_number}')            # origin size
 
-
     cfg.log_string('Inference finished.')
+
 
 if __name__=="__main__":
     args=parse_args()

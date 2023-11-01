@@ -5,11 +5,8 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import torch.utils.data
 from torchvision import transforms
-import pickle
-from PIL import Image
 import numpy as np
 import json, gzip
-import random
 from tqdm import tqdm
 from utils.sdf_util import *
 from utils.vis import *
@@ -47,10 +44,7 @@ class Front3D_Recon_Dataset(Dataset):
             classnames = self.config['data']['train_class_name']        # val is in training time
         else:
             classnames = self.config['data']['test_class_name']
-        # # classnames is a list, all class will to reconstruct
-        # if not isinstance(classnames, list):
-        #     raise ValueError('classname must be List !')
-        
+
         dataset_name = self.config['data']['dataset']       # now, just for front3d
         if isinstance(classnames, list):
             self.multi_class = True
@@ -90,12 +84,10 @@ class Front3D_Recon_Dataset(Dataset):
 
         self.use_cls_encoder = self.config['model']['latent_feature']['use_cls_encoder']
 
-
     def __len__(self):
         return len(self.split)
 
-
-    def __load_data(self): 
+    def __load_data(self):
         self.anno_dict = {}             # key: img_id,              value: all anno
         self.cid_dict = {}              # key: jid,                 value: cid (mapping category id)
         self.sdf_dict = {}              # key: (jid, scale_name),   value: SDF voxel
@@ -124,13 +116,13 @@ class Front3D_Recon_Dataset(Dataset):
                 # width, height = img_PIL.size
                 segm = segm[100:100+height, 100:100+width, :]       # axis = 0 is height, axis = 1 is width
                 sequence['all_mask'] = segm             # all objects mask
-                
+
                 if self.vis_mask_loss:          # load visible mask
                     vis_mask_path = img_path.replace('rgb', 'segm').replace(f'.{post_fix}', '.npy.gz')
                     with gzip.GzipFile(vis_mask_path, 'r') as f:
                         vis_mask = np.load(f)
                     sequence['vis_mask'] = vis_mask
-                
+
                 if self.use_depth:
                     # load depth
                     depth_path = img_path.replace('rgb', 'depth').replace(f'.{post_fix}', '.npy.gz')
@@ -146,7 +138,7 @@ class Front3D_Recon_Dataset(Dataset):
                     sequence['normal'] = normal
 
                 self.anno_dict[imgid] = sequence
-            
+
             if self.use_sdf:
                 object_ind = objid
                 jid = sequence['obj_dict'][object_ind]['model_file_name'][0]        # ['xxxxxxxxx'], a list
@@ -156,7 +148,7 @@ class Front3D_Recon_Dataset(Dataset):
 
                 if jid not in self.cid_dict:
                     self.cid_dict[jid] = category_label_mapping[cname]
-            
+
         if self.use_sdf:
             jid_scale_list=list(set(jid_scale_list))
             print("loading object SDF data")
@@ -171,12 +163,9 @@ class Front3D_Recon_Dataset(Dataset):
                     centroid = np.array(spacing_dic['centroid'])
                     with gzip.GzipFile(sdf_path, 'r') as f:
                         voxels = np.load(f)                                 # (R, R, R) -> dim0:x, dim1:y, dim2:z
-    
 
                     self.sdf_dict[(jid, scale_name)] = voxels
                     self.spacing_centroid_dict[(jid, scale_name)] = (spacing, padding, centroid)
-
-        # print('ok')   # test for ok
 
     def __getitem__(self, index):
         imgid, objid, cname = self.split[index]
@@ -509,6 +498,3 @@ def Front3D_Recon_dataloader(config, mode='train'):
                     worker_init_fn=worker_init_fn, pin_memory=True
                 )
     return dataloader
-
-
-

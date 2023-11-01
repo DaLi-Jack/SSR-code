@@ -32,7 +32,7 @@ def sample_points_normals(mesh, n_points):
     pointcloud = np.asarray(pointcloud)
     pointcloud = pointcloud.astype(np.float32)
     normals = mesh.face_normals[face_idx]
-    
+
     return pointcloud, normals
 
 
@@ -173,7 +173,6 @@ if __name__ == '__main__':
             pred_path = os.path.join(exp_path, 'out', category, obj_name, 'ssr_ssr_truth', 'pred.ply')
             gt_path = os.path.join(exp_path, 'out', category, obj_name, 'ssr_ssr_truth', 'gt.ply')
 
-
             t1 = time.time()
 
             pred_mesh = trimesh.load(pred_path)
@@ -199,14 +198,9 @@ if __name__ == '__main__':
 
     save_folder = os.path.join(exp_path, 'out')
     with open(os.path.join(save_folder, 'normals_correctness.txt'), 'w') as f:
-        
         for category in category_list:
             f.write(f'{category}: {cal_dic[category]/num_dic[category]:.5f}\n')
-        
+
         f.write(f'mean: {normals_correctness_total/number_total:.5f}\n')
 
-            
     print('done')
-
-
-

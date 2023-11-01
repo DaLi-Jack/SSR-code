@@ -10,6 +10,7 @@ import cv2
 from utils import rend_util
 from utils.sdf_util import *
 
+
 def plot(implicit_network, indices, plot_data, path, epoch, img_res, plot_nimgs, resolution, grid_boundary,  level=0):
 
     if plot_data is not None:
@@ -60,10 +61,10 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
     level = 0.0
     N = resN // cropN
 
-    # grid_min = grid_boundary.min(dim=1)[0]          # .min -> (values, indices)   .min[0] -> values   
+    # grid_min = grid_boundary.min(dim=1)[0]          # .min -> (values, indices)   .min[0] -> values
     # grid_max = grid_boundary.max(dim=1)[0]
     grid_min = np.array([-1, -1, -1])
-    grid_max = np.array([1, 1, 1])                    
+    grid_max = np.array([1, 1, 1])
     xs = np.linspace(grid_min[0]-delta, grid_max[0]+delta, N+1)
     ys = np.linspace(grid_min[1]-delta, grid_max[1]+delta, N+1)
     zs = np.linspace(grid_min[2]-delta, grid_max[2]+delta, N+1)
@@ -87,7 +88,7 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
 
                 xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
                 points = torch.tensor(np.vstack([xx.ravel(), yy.ravel(), zz.ravel()]).T, dtype=torch.float).cuda().to(torch.float32)          # in cube coords
-                
+
                 def evaluate(points):
                     z = []
                     for _, pnts in enumerate(torch.split(points, 100000, dim=0)):
@@ -114,7 +115,7 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
 
                     z = sdf_gt.squeeze(1)
                     return z
-            
+
                 # construct point pyramids
                 points = points.reshape(cropN, cropN, cropN, 3).permute(3, 0, 1, 2)
                 points_pyramid = [points]
@@ -122,7 +123,7 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
                     points = avg_pool_3d(points[None])[0]
                     points_pyramid.append(points)
                 points_pyramid = points_pyramid[::-1]
-                
+
                 # evalute pyramid with mask
                 mask = None
                 threshold = 2 * (x_max - x_min)/cropN * 8
@@ -277,6 +278,7 @@ def get_surface_trace(path, epoch, sdf, resolution=100, grid_boundary=[-2.0, 2.0
             return meshexport
         #return traces
     return None
+
 
 def get_surface_high_res_mesh(sdf, resolution=100, grid_boundary=[-2.0, 2.0], level=0, take_components=True):
     # get low res mesh to sample point cloud
@@ -508,7 +510,7 @@ def get_grid(points, resolution, input_min=None, input_max=None, eps=0.1):
 
 
 def plot_normal_maps(normal_maps, ground_true, path, epoch, img_res, indices, ray_mask):
-    
+
     normal_maps = (normal_maps[0].view(img_res[0], img_res[1], -1)).cpu().detach().numpy()
     ray_mask_map = (ray_mask[0].view(img_res[0], img_res[1], -1)).cpu().detach().numpy()
 
@@ -520,8 +522,7 @@ def plot_normal_maps(normal_maps, ground_true, path, epoch, img_res, indices, ra
     ray_mask_map = Image.fromarray((ray_mask_map[:, :, 0] * 255).astype(np.uint8))
     ray_mask_map = ray_mask_map.convert('L')
     normal_maps.putalpha(ray_mask_map)
-    
-    
+
     ground_true = ground_true.cuda()            # [B, N, 3]
 
     normal_maps_plot = lin2img(ground_true, img_res)
@@ -540,7 +541,7 @@ def plot_normal_maps(normal_maps, ground_true, path, epoch, img_res, indices, ra
 
 
 def plot_images(rgb_points, ground_true, path, epoch, img_res, indices, exposure=False, ray_mask=None):
-    
+
     rgb_map = (rgb_points[0].view(img_res[0], img_res[1], -1)).cpu().detach().numpy()
     ray_mask_map = (ray_mask[0].view(img_res[0], img_res[1], -1)).cpu().detach().numpy()
 
@@ -600,7 +601,6 @@ def plot_depth_maps(depth_maps, ground_true, path, epoch, img_res, indices, ray_
 
 
     return ground_true, depth_maps
-    
 
 
 def lin2img(tensor, img_res):
@@ -639,4 +639,3 @@ def merge_output(res, total_pixels, batch_size):
                                              1).reshape(batch_size * total_pixels, -1)
 
     return model_outputs
-

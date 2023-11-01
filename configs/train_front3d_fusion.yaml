@@ -149,6 +149,3 @@ other:
   visualize_interval: 1000              # img tenserboard vis    (iter)
   dump_result: True                     # save result
   dump_interval: 1000                   # (iter)
-  
-
-

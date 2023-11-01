@@ -1,9 +1,7 @@
 import os
 import torch
 import numpy as np
-import skimage, trimesh, scipy
 import torch.nn.functional as F
-import copy
 from utils import rend_util
 
 
@@ -295,5 +293,3 @@ def vis_sdf(points_flat, points_sdf, mode):
     scene = pyrender.Scene()
     scene.add(cloud)
     viewer = pyrender.Viewer(scene, use_raymond_lighting=True, point_size=7)
-
-
