@@ -1,0 +1,16 @@
+fvcore
+iopath
+tensorboard
+scikit-image
+matplotlib
+imageio
+plotly
+pandas
+opencv-python
+pyqt5
+pyyaml
+tqdm
+trimesh
+scipy
+setuptools==59.5.0
+joblib

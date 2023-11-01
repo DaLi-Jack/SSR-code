@@ -1,0 +1,153 @@
+resume: False
+finetune: False
+method: ssr                            # use the trainer
+exp_name: curri_c_d_aftershape_small
+save_root_path: output/real_img            # save path = os.path.join(save_root_path, exp_name)
+weight: model_latest.pth
+show_rendering: False                   # NOTE: True for novel view synthesis
+fix_random_seed: True                   # fix random seed
+
+eval:
+  extract_mesh: True
+  split_n_pixels: 648                  # 648 * 2, split pixels (total pixels too large)
+  export_color_mesh: False               # whether mesh with appearance
+  
+device:
+  use_gpu: True
+  gpu_ids: '0'                          # multi-gpu train, e.g. '3,6' will use 3st and 6st gpus
+
+data:
+  dataset: REALIMG
+  img_res: [484, 648]                   # dataset image resolution [H, W], FRONT [484, 648], Replica [512, 512]
+  data_path: /home/nijunfeng/mycode/omni3d/output/test_img_pexel
+  split_dir: ./dataset
+  sdf_path: /home/newdisk/merge-data
+  train_class_name: ['desk', 'dresser', 'sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'dresser', 'chair', 'night_stand', 'table', 'desk', 'dresser']
+  test_class_name: 'test'
+  load_dynamic: True                    # True:load the data dynamically, False:store them in the memory firstly
+  trial: False                          # only use 200 split
+  batch_size:
+    train: 4
+    val: 1
+    test: 1
+  num_workers: 16
+  num_pixels:
+    train: 64                      # pixels number for an image
+    val: 64
+    test: -1
+  use_depth: True                       # load depth
+  use_normal: True
+  use_sdf: True
+  use_instance_mask: True
+  mask_filter:  False                    # use object full filter image, prior is higher than bdb2d_filter
+  bdb2d_filter: True                    # use object bdb 2d filter image
+  soft_pixels: 10                        # expand bdb 2d coefficient
+
+optimizer:
+  type: Adam
+  lr: 0.001
+  beta1: 0.9
+  beta2: 0.999
+  eps: 0.00000001                       # 1e-8
+  weight_decay: 0
+
+scheduler:
+  type: MultiStepLR
+  milestone: [330,370]                    # milestone value change lr
+  gamma: 0.2
+
+loss:
+  use_curriculum_color: True           # use curriculum learning color
+  use_curriculum_depth: True
+  use_curriculum_normal: True
+  curri_color: [150, 300, 0.0, 0.1]     # [start_step, end_step, start_weight, end_weight]
+  curri_depth: [150, 300, 0.0, 0.1]
+  curri_normal: [150, 300, 0.0, 0.01]
+  vis_mask_loss: True                   # only calculate color,depth,normal loss on visible mask
+  rgb_loss: L1loss
+  color_weight: 0.0                     # if use curriculum learning color, set color_weight=0.0
+  eikonal_weight: 0.0
+  smooth_weight: 0.01
+  depth_weight: 0.0
+  normal_l1_weight: 0.0
+  normal_cos_weight: 0.0
+  ray_mask_weight: 0.0                   # volume rendering ray mask loss
+  instance_mask_weight: 0.0
+  sdf_weight: 1
+  end_step: -1                           # not use decay
+  vis_sdf: False                         # vis sdf use pyrender
+
+model:
+  ray_noise: False
+  use_atten: False
+  stop_encoder_grad: False              # Freeze encoder weights and only train mlp
+  feature_vector_size: 256              # implicit net output is d_out(sdf) + feature_vector
+  scene_bounding_sphere: -1             # Clamping the SDF with the scene bounding sphere, so that all rays are eventually occluded, -1 represents not clamp
+  white_bkgd: False                     # To composite onto a white background, use the accumulated alpha map. when True, not use scene_bounding_sphere
+  bg_color: [1.0, 1.0, 1.0]
+  sampling_method: errorbounded
+  Grid_MLP: False                       # whether use mlp grid (now, just mlp)
+  depth_norm: True                      # whether use depth scale
+
+  latent_feature:                       # mlp input feature (image feature ...)
+    use_encoder: True                   # whether use image align feature  ->  change name use_image_feature
+    use_global_encoder: True           # whether object bdb2d global feature
+    use_cls_encoder: True
+    latent_feature_dim: 256             # same to hidden dims 256
+    encoder:                            # image encoder net
+      encoder_type: spatial             # spatial or global
+      backbone: resnet34
+      pretrained: True
+      num_layers: 3                     # latent_size=[0, 64, 128, 256, 512, 1024][num_layers], num_layers=3  ->  latent_size=256(image feature dims)
+
+  implicit_network:
+    d_in: 3                             # monosdf is 3 (x,y,z)
+    d_out: 1                            # sdf
+    dims: [ 256, 256, 256, 256, 256, 256, 256 ]   # will add input dims(foremost), and output dims(in the last)  ->  [in_dims, 256*7, out_dims]
+    geometric_init: True                # eikonal_loss will be improved prominently
+    bias: 0.6                           # geometric bias
+    skip_in: [4]                        # skip in hidden layers
+    weight_norm: True
+    multires: 6                         # positional encoding orders
+    sphere_scale: 1.0
+    inside_outside: False               # a geometric params
+    use_grid_feature: False             # grid network maybe use
+    divide_factor: 5.0                  # 1.5 for replica, 6 for dtu, 3.5 for tnt, 1.5 for bmvs, we need it to normalize the points range for multi-res grid
+  
+  rendering_network:
+    mode: nerf
+    d_in: 3                             # idr -> d_in=9; nerf -> d_in=3
+    d_out: 3
+    dims: [ 256, 256 ]
+    weight_norm: True
+    multires_view: 4                    # positional encoding orders
+    per_image_code: False
+  
+  density:
+    params_init:
+      beta: 0.1
+    beta_min: 0.0001
+  
+  ray_sampler:
+    near: 1.0
+    far: 9.5
+    N_samples: 64
+    N_samples_eval: 128
+    N_samples_extra: 32
+    add_bdb3d_points: True              # add extra points
+    use_surface_points: True            # add points arround surface (use when add_bdb3d_points True), if False, add random bdb3d points
+    total_add_points: 30000                    # add bdb3d points num
+    eps: 0.1
+    beta_iters: 10
+    max_total_iters: 5
+    take_sphere_intersection: False     # if True, define a sampler sphere, model.scene_bounding_sphere will work; 
+                                        # if False, define near and far directly, model.ray_sampler.near and model.ray_sampler.far will work
+other:
+  nepoch: 400                           # max epoch
+  model_save_interval: 1               # (epoch)
+  visualize_interval: 1000              # img tenserboard vis    (iter)
+  dump_result: True                     # save result
+  dump_interval: 1000                   # (iter)
+  
+
+
