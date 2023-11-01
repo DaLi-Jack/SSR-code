@@ -1,7 +1,7 @@
 resume: False
 finetune: False
 method: ssr                            # use the trainer
-exp_name: curri_c_d_n_aftershape_small_normal_small             # pix3d_curri_c_d_n_aftershape_noneoverlap_middepth
+exp_name: front3d_ckpt             # pix3d_curri_c_d_n_aftershape_noneoverlap_middepth
 save_root_path: ./output            # save path = os.path.join(save_root_path, exp_name)
 weight: model_latest.pth
 show_rendering: False                   # NOTE: True for novel view synthesis
@@ -19,7 +19,7 @@ device:
 data:
   dataset: SUNRGBD
   img_res: [484, 648]                   # dataset image resolution [H, W], FRONT [484, 648], Replica [512, 512]
-  data_path: /home/newdisk/BigData/sunrgbd_train_test_data
+  data_path: data/SUNRGBD
   split_dir: ./dataset
   sdf_path: /home/newdisk/merge-data
   train_class_name: ['desk', 'dresser', 'sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'dresser', 'chair', 'night_stand', 'table', 'desk', 'dresser']

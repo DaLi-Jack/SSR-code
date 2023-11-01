@@ -1,0 +1,32 @@
+[
+    [
+        "test/rgb/001228_rgb_006282.jpeg",
+        "0",
+        "night_stand"
+    ],
+    [
+        "test/rgb/001511_rgb_007790.jpeg",
+        "1",
+        "bed"
+    ],
+    [
+        "test/rgb/000648_rgb_003297.jpeg",
+        "2",
+        "chair"
+    ],
+    [
+        "test/rgb/000643_rgb_003267.jpeg",
+        "0",
+        "sofa"
+    ],
+    [
+        "test/rgb/000654_rgb_003335.jpeg",
+        "6",
+        "chair"
+    ],
+    [
+        "test/rgb/001124_rgb_005750.jpeg",
+        "0",
+        "sofa"
+    ]
+]

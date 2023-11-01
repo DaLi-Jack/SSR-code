@@ -1,7 +1,7 @@
 resume: False                           # if true resume training, start_epoch is the last epoch
 finetune: False                         # if true set start_epoch is 0
 method: ssr                            # use the trainer
-exp_name: front3d_exp                   # experiment name
+exp_name: front3d_ckpt                   # experiment name
 save_root_path: ./output                # save path = os.path.join(save_root_path, exp_name)
 weight: model_latest.pth
 show_rendering: False                    # NOTE: True for novel view synthesis
@@ -11,7 +11,7 @@ eval:
   extract_mesh: True
   split_n_pixels: 648                  # 648 * 2, split pixels (total pixels too large)
   mesh_coords: camera
-  export_color_mesh: False               # whether mesh with appearance NOTE: set False when evaluate
+  export_color_mesh: True               # whether mesh with appearance NOTE: set False when evaluate
   fusion_scene: False                     # whether fusion scene
   
 device:
@@ -21,11 +21,11 @@ device:
 data:
   dataset: FRONT3D
   img_res: [484, 648]                   # dataset image resolution [H, W], FRONT [484, 648], Replica [512, 512]
-  data_path: /home/nijunfeng/mycode/project/blender-3D-Front/output/FRONT3D
+  data_path: data/FRONT3D-demo
   split_dir: ./dataset
-  sdf_path: /home/newdisk/merge-data
+  sdf_path: data/FRONT3D-demo/gt-sdf
   train_class_name: ['desk', 'dresser', 'sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'dresser', 'chair', 'night_stand', 'table', 'desk', 'dresser']
-  test_class_name: 'evaluation_total'
+  test_class_name: 'demo_colormesh'
   load_dynamic: True                    # True:load the data dynamically, False:store them in the memory firstly
   trial: False                          # only use 200 split
   batch_size:

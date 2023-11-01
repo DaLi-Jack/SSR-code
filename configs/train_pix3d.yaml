@@ -1,7 +1,7 @@
 resume: False
 finetune: False
 method: ssr                            # use the trainer
-exp_name: pix3d_curri_c_d_n_aftershape_noneoverlap_middepth
+exp_name: pix3d_exp
 save_root_path: ./output            # save path = os.path.join(save_root_path, exp_name)
 weight: model_latest.pth
 show_rendering: False                   # NOTE: True for novel view synthesis
@@ -21,10 +21,10 @@ data:
   img_res: None                   # dataset image resolution [H, W], pix3d raw image resolution is different
   resize_img: True
   resize_res: [384, 384]          # [H, W]
-  data_path: /home/newdisk/pix3d_fix
+  data_path: data/Pix3D
   split_dir: ./dataset
-  sdf_path: /home/newdisk/pix3d/sdf
-  train_class_name: ['colormesh_main']
+  sdf_path: data/Pix3D/gt-sdf
+  train_class_name: ['all']
   test_class_name: 'all'
   load_dynamic: True                    # True:load the data dynamically, False:store them in the memory firstly
   trial: False                          # only use 200 split

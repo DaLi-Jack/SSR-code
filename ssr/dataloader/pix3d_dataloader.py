@@ -253,7 +253,7 @@ class Pix3d_Recon_Dataset(Dataset):
                 # load object SDF
                 scene_scale = np.array([1.0, 1.0, 1.0])         # none scene scale
                 model_file_name = sequence['obj_dict'][object_ind]['model_file_name']
-                voxel_path = os.path.join(self.config['data']['data_path'], 'sdf', cname, model_file_name)
+                voxel_path = os.path.join(self.config['data']['sdf_path'], cname, model_file_name)
                 sdf_path = os.path.join(voxel_path, 'voxels.npy.gz')
                 spacing_path = os.path.join(voxel_path, 'spacing_centroid.json')
 

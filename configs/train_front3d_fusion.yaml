@@ -1,7 +1,7 @@
 resume: False
 finetune: False
 method: ssr                            # use the trainer
-exp_name: curri_c_d_n_aftershape_small_normal_small
+exp_name: front3d_ckpt
 save_root_path: ./output            # save path = os.path.join(save_root_path, exp_name)
 weight: model_latest.pth
 show_rendering: True                   # NOTE: True for novel view synthesis
@@ -20,9 +20,9 @@ device:
 data:
   dataset: FRONT3D
   img_res: [484, 648]                   # dataset image resolution [H, W], FRONT [484, 648], Replica [512, 512]
-  data_path: /home/nijunfeng/mycode/project/blender-3D-Front/output/FRONT3D
+  data_path: data/FRONT3D-demo
   split_dir: ./dataset
-  sdf_path: /home/newdisk/merge-data
+  sdf_path: data/FRONT3D-demo/gt-sdf
   train_class_name: ['desk', 'dresser', 'sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'dresser', 'chair', 'night_stand', 'table', 'desk', 'dresser']
   test_class_name: 'scene_3848'
   load_dynamic: True                    # True:load the data dynamically, False:store them in the memory firstly

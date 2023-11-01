@@ -130,5 +130,7 @@ dmypy.json
 *.pyc
 
 # mycode
+data/
 output/
 external/
+.vscode/
