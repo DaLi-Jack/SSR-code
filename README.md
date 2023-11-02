@@ -4,7 +4,7 @@
     <a href=''>
       <img src='https://img.shields.io/badge/Paper-PDF-red?style=plastic&logo=adobeacrobatreader&logoColor=red' alt='Paper PDF'>
     </a>
-    <a href=''>
+    <a href='http://arxiv.org/abs/2311.00457'>
       <img src='https://img.shields.io/badge/Paper-arXiv-green?style=plastic&logo=arXiv&logoColor=green' alt='Paper arXiv'>
     </a>
     <a href='https://dali-jack.github.io/SSR/'>
