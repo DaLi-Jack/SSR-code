@@ -119,7 +119,7 @@ class Evaluate:
         pred_cube_mesh_path = os.path.join(output_folder, 'pred_cube.ply')
         gt_cube_mesh_path = os.path.join(output_folder, 'label_cube.ply')
 
-        output_folder = os.path.join(output_folder, f'ssr_ssr_truth')
+        output_folder = os.path.join(output_folder, f'object_resize')
         os.makedirs(output_folder, exist_ok=True)
 
         align_mesh_path = os.path.join(output_folder, 'align.ply')
