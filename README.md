@@ -1,7 +1,7 @@
 # Single-view 3D Scene Reconstruction with High-fidelity Shape and Texture (3DV 2024)
 
 <p align="center">
-    <a href=''>
+    <a href='https://arxiv.org/pdf/2311.00457.pdf'>
       <img src='https://img.shields.io/badge/Paper-PDF-red?style=plastic&logo=adobeacrobatreader&logoColor=red' alt='Paper PDF'>
     </a>
     <a href='http://arxiv.org/abs/2311.00457'>
@@ -67,6 +67,8 @@ Please download our [pre-trained model]() (coming soon) and unzip in the `output
 ## Training
 ```bash
 # NOTE: set show_rendering=False
+# We use 4xA100-80GB gpus to train our model, if you want to reproduce our model, 
+# please set gpu_ids='0,1,2,3', batch_size.train=96, batch_size.val=16.
 
 # for 3D-FRONT dataset
 python train.py --config configs/train_front3d.yaml
