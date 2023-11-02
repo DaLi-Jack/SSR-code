@@ -109,7 +109,12 @@ python inference_rot_angle.py --config configs/train_front3d_fusion.yaml
 ## Evaluation
 ```bash
 # NOTE: set eval.export_mesh=True, eval.export_color_mesh=False
+
+# for 3D-FRONT dataset
 bash eval/evaluate.sh configs/train_front3d.yaml
+
+# for Pix3D dataset
+bash eval/evaluate.sh configs/train_pix3d.yaml
 ```
 
 ## Citation

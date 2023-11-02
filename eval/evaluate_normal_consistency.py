@@ -142,8 +142,12 @@ if __name__ == '__main__':
     root_path = cfg['save_root_path']
     exp_name = cfg['exp_name']
     exp_path = os.path.join(root_path, exp_name)
+    dataset_type = cfg['data']['dataset']
 
-    category_list = ['sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'chair', 'night_stand', 'table']
+    if dataset_type == 'FRONT3D':
+        category_list = ['sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'chair', 'night_stand', 'table']
+    else:           # Pix3D
+        category_list = ['sofa', 'bed', 'bookcase', 'desk', 'chair', 'table', 'misc', 'tool', 'wardrobe']
 
     cal_dic = {}
     num_dic = {}
@@ -160,7 +164,7 @@ if __name__ == '__main__':
 
         for obj_name in obj_list:
 
-            output_folder = os.path.join(exp_path, 'out', category, obj_name, 'ssr_ssr_truth')
+            output_folder = os.path.join(exp_path, 'out', category, obj_name, 'object_resize')
             if os.path.exists(os.path.join(output_folder, 'normals_correctness.txt')):
                 with open(os.path.join(output_folder, 'normals_correctness.txt'), 'r') as f:
                     normals_correctness = float(f.readline())
@@ -171,8 +175,12 @@ if __name__ == '__main__':
                 print(f'{exp_name} {obj_name} has been evaluated')
                 continue
 
-            pred_path = os.path.join(exp_path, 'out', category, obj_name, 'ssr_ssr_truth', 'pred.ply')
-            gt_path = os.path.join(exp_path, 'out', category, obj_name, 'ssr_ssr_truth', 'gt.ply')
+            pred_path = os.path.join(exp_path, 'out', category, obj_name, 'object_resize', 'pred.ply')
+            gt_path = os.path.join(exp_path, 'out', category, obj_name, 'object_resize', 'gt.ply')
+
+            if not os.path.exists(pred_path) or not os.path.exists(gt_path):
+                print(f'{exp_name} {obj_name} has not been evaluated')
+                continue
 
             t1 = time.time()
 
