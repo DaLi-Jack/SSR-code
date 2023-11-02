@@ -1,7 +1,9 @@
+import math
+
 import torch
 from torch import nn
-import math
 from scipy.optimize import leastsq
+
 from utils.sdf_util import *
 
 
