@@ -39,7 +39,6 @@ bin['pitch_bin'] = [[-60.0 * np.pi / 180 + i * PITCH_WIDTH, -60.0 * np.pi / 180 
 bin['roll_bin'] = [[-20.0 * np.pi / 180 + i * ROLL_WIDTH, -20.0 * np.pi / 180 + (i + 1) * ROLL_WIDTH] for i in
                    range(ROLL_NUMBER_BINS)]
 
-
 sunrgbd_front_label_mapping={
     3:2,
     4:6,
@@ -59,8 +58,6 @@ front3d_category_label_mapping = {
 front3d_label_category_mapping = {}
 for k, v in front3d_category_label_mapping.items():
     front3d_label_category_mapping[v] = k
-
-
 
 sunrgbd_layout_path = "./dataset/SUNRGBD/preprocessed/layout_avg_file.pkl"
 with open(sunrgbd_layout_path,'rb') as f:
@@ -303,6 +300,7 @@ def worker_init_fn(worker_id):
     base_seed = int.from_bytes(random_data, byteorder="big")
     np.random.seed(base_seed + worker_id)
 
+
 def SUNRGBD_Recon_dataloader(config, mode='train'):
     dataloader = DataLoader(
                     dataset=SUNRGBD_Recon_Dataset(config, mode),
@@ -312,4 +310,3 @@ def SUNRGBD_Recon_dataloader(config, mode='train'):
                     worker_init_fn=worker_init_fn, pin_memory=True
                 )
     return dataloader
-

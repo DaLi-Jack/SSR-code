@@ -5,6 +5,7 @@ import torch
 from utils import rend_util, sdf_util
 from ssr.ssr_utils.utils import repeat_interleave
 
+
 class RaySampler(metaclass=abc.ABCMeta):
     def __init__(self,near, far):
         self.near = near
@@ -13,6 +14,7 @@ class RaySampler(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_z_vals(self, ray_dirs, cam_loc, model):
         pass
+
 
 class UniformSampler(RaySampler):
     def __init__(self, scene_bounding_sphere, near, N_samples, take_sphere_intersection=False, far=-1):
@@ -220,7 +222,6 @@ class ErrorBoundSampler(RaySampler):
                 cdf = torch.cumsum(pdf, -1)
                 cdf = torch.cat([torch.zeros_like(cdf[..., :1]), cdf], -1)  # (batch, len(bins))
 
-
             # Invert CDF
             if (not_converge and total_iters < self.max_total_iters) or (not model.training):
                 u = torch.linspace(0., 1., steps=N).cuda().unsqueeze(0).repeat(cdf.shape[0], 1)
@@ -242,11 +243,9 @@ class ErrorBoundSampler(RaySampler):
             t = (u - cdf_g[..., 0]) / denom
             samples = bins_g[..., 0] + t * (bins_g[..., 1] - bins_g[..., 0])
 
-
             # Adding samples if we not converged
             if not_converge and total_iters < self.max_total_iters:
                 z_vals, samples_idx = torch.sort(torch.cat([z_vals, samples], -1), -1)
-
 
         z_samples = samples
         

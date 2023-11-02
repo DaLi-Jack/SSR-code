@@ -4,6 +4,7 @@ import math
 from scipy.optimize import leastsq
 from utils.sdf_util import *
 
+
 # copy from MiDaS
 def compute_scale_and_shift(prediction, target, mask):
     # system matrix: A = [[a_00, a_01], [a_10, a_11]]
@@ -409,4 +410,3 @@ class MonoSDFLoss(nn.Module):
 
         output['total_loss'] = total_loss
         return output
-

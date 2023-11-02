@@ -13,6 +13,7 @@ import imageio
 
 from utils.sdf_util import *
 
+
 category_label_mapping = {
     "table": 0, "sofa": 1, "wardrobe": 2, "tool": 3,
     "chair": 4, "bookcase": 5, "bed": 6, "desk": 7, "misc": 8
@@ -76,10 +77,8 @@ class Pix3d_Recon_Dataset(Dataset):
 
         self.use_cls_encoder = self.config['model']['latent_feature']['use_cls_encoder']
 
-
     def __len__(self):
         return len(self.split)
-    
 
     def load_rgb(self, path, resize_img=False, resize_res=None, normalize_rgb = False):
 
@@ -95,7 +94,6 @@ class Pix3d_Recon_Dataset(Dataset):
             img *= 2.
         img = img.transpose(2, 0, 1)        # [C, H, W]
         return img
-
 
     def __getitem__(self, data_idx):
         success_flag=False
@@ -430,6 +428,7 @@ def worker_init_fn(worker_id):
     random_data = os.urandom(4)
     base_seed = int.from_bytes(random_data, byteorder="big")
     np.random.seed(base_seed + worker_id)
+
 
 def Pix3D_Recon_dataloader(config, mode='train'):
     dataloader = DataLoader(

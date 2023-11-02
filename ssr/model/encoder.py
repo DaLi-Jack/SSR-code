@@ -17,6 +17,7 @@ def make_encoder(conf, **kwargs):
         raise NotImplementedError("Unsupported encoder type")
     return net
 
+
 class SpatialEncoder(nn.Module):
     """
     2D (Spatial/Pixel-aligned/local) image encoder

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Attention_RoI_Module(nn.Module):
     def __init__(self,img_feat_channel=256,global_dim=256,global_detach=True):
         super(Attention_RoI_Module,self).__init__()

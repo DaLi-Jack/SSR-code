@@ -5,8 +5,6 @@ import torch.nn.functional as F
 import functools
 
 import numpy as np
-from PIL import Image
-from tqdm import tqdm
 
 import os
 import random
@@ -199,7 +197,6 @@ class ConvBlock(nn.Module):
         out3 += residual
 
         return out3
-
 
 # refer: https://blog.csdn.net/ytusdc/article/details/125529881
 def fix_random_seed(seed=1029):

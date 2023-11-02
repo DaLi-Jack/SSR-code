@@ -75,7 +75,6 @@ def run(cfg):
     else:
         mesh_coords = config['eval']['mesh_coords']
 
-
     angle_list = [-40, 0, 40]
 
     for angle_idx in range(len(angle_list)):
@@ -167,7 +166,7 @@ def run(cfg):
                 depth_gt_map, depth_map = plot_depth_maps(depth_eval, ground_truth['depth'], path=evals_folder_name, epoch=0, img_res=img_res, indices=indices, ray_mask=ray_mask)
                 depth_gt_map.save('{0}/eval_{1}_gt_{2}.png'.format(depth_dir,'%03d' % render_id, angle))
                 depth_map.save('{0}/eval_{1}_fusion_{2}.png'.format(depth_dir,'%03d' % render_id, angle))
-                
+
                 # plot normal images and gt
                 normal_gt = (ground_truth['normal'].cuda() + 1.0) / 2.0
                 normal_pred = (normal_eval + 1.0) / 2.0             # from [-1, 1] to [0, 1]

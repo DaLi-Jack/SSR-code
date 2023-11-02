@@ -260,7 +260,7 @@ def vis_sdf(points_flat, points_sdf, mode):
         ######## all points
         colors[sdf < 0, 2] = 1              # blue
         colors[sdf > 0, 0] = 1              # red
-    
+
     elif mode == 'only pos':
         ######### only sdf>0 points
         colors[sdf > 0, 0] = 1              # red
