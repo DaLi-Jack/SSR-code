@@ -1,15 +1,12 @@
+import os
+import random
+
 import torch
 from torch.nn import init
 import torch.nn as nn
 import torch.nn.functional as F
 import functools
-
 import numpy as np
-from PIL import Image
-from tqdm import tqdm
-
-import os
-import random
 
 
 def init_weights(net, init_type='normal', init_gain=0.02):

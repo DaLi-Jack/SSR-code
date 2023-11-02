@@ -1,8 +1,10 @@
 import torch
 from torch import nn
 import numpy as np
+
 from .embed import get_embedder
 from ssr.ssr_utils.utils import repeat_interleave
+
 
 class ImplicitNetwork(nn.Module):
     def __init__(

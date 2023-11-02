@@ -1,8 +1,11 @@
+import math
+
 import torch
 from torch import nn
-import math
 from scipy.optimize import leastsq
+
 from utils.sdf_util import *
+
 
 # copy from MiDaS
 def compute_scale_and_shift(prediction, target, mask):

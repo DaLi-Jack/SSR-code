@@ -2,9 +2,10 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import torchvision
-from ..ssr_utils.network_utils import get_norm_layer
 import torch.autograd.profiler as profiler
 import numpy as np
+
+from ..ssr_utils.network_utils import get_norm_layer
 
 
 def make_encoder(conf, **kwargs):

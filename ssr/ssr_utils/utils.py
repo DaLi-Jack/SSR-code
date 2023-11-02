@@ -1,9 +1,11 @@
-import torch
-import numpy as np
 import os
 import urllib
+
+import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
+import numpy as np
+
 
 # replace for torch.repeat_interleave
 def repeat_interleave(input, repeats, dim=0):
