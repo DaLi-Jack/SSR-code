@@ -12,6 +12,7 @@ class Density(nn.Module):
     def forward(self, sdf, beta=None):
         return self.density_func(sdf, beta=beta)
 
+
 # translation sdf to density
 class LaplaceDensity(Density):  # alpha * Laplace(loc=0, scale=beta).cdf(-sdf)
     def __init__(self, params_init={}, beta_min=0.0001):

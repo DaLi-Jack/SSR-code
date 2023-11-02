@@ -15,7 +15,7 @@
     <a href="https://yixchen.github.io/">Yixin Chen*</a>,
     <a href="https://dali-jack.github.io/Junfeng-Ni/">Junfeng Ni*</a>,
     <a href="https://pku.ai/author/nan-jiang/">Nan Jiang</a>,
-    <a>Yaowei Zhang</a>,
+    <a href="">Yaowei Zhang</a>,
     <a href="https://yzhu.io/">Yixin Zhu</a>,
     <a href="https://siyuanhuang.com/">Siyuan Huang</a>
 </p>

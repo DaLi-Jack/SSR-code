@@ -136,7 +136,6 @@ class SSRNet(torch.nn.Module):                                                 #
                 nn.Sigmoid()
             )
 
-    
     def get_feature(self, input, uv, z_vals_pnts):
         image = input["image"]                              # [B, 3, H, W]
         self.image_shape = torch.empty(2).cuda()
@@ -257,7 +256,6 @@ class SSRNet(torch.nn.Module):                                                 #
                 meshnonecolor = trimesh.Trimesh(verts_world, faces, normals)
 
             return meshcolor, meshnonecolor
-
 
         batch_size, num_pixels, _ = uv.shape
 
@@ -545,7 +543,6 @@ class SSRNet(torch.nn.Module):                                                 #
         cat_tensor = tensor.reshape(N_uv, -1)       # [N_uv, N_pnts*B]
 
         return cat_tensor              # [N_uv, N_pnts*B]
-
 
     def cat_rgb(self, rgb, sort_idx, batch_size, num_pixels):
         """

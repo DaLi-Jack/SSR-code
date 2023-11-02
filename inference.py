@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('--config', type=str, required=True, help='configure file for training or testing.')
     return parser.parse_args()
 
+
 def run(cfg):
     torch.set_default_dtype(torch.float32)
     config = cfg.config

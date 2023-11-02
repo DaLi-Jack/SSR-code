@@ -412,4 +412,3 @@ class MonoSDFLoss(nn.Module):
 
         output['total_loss'] = total_loss
         return output
-

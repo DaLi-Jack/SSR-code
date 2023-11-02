@@ -8,6 +8,9 @@ import torch.nn.functional as F
 import functools
 import numpy as np
 
+import os
+import random
+
 
 def init_weights(net, init_type='normal', init_gain=0.02):
     """Initialize network weights.
@@ -196,7 +199,6 @@ class ConvBlock(nn.Module):
         out3 += residual
 
         return out3
-
 
 # refer: https://blog.csdn.net/ytusdc/article/details/125529881
 def fix_random_seed(seed=1029):

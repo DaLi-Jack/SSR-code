@@ -7,6 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from utils.rend_util import get_psnr
 
+
 def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,device,checkpoint):
     start_t = time.time()
     config = cfg.config
@@ -29,7 +30,7 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
     scheduler.last_epoch = start_epoch
 
     model.train()
-    
+
     min_eval_loss = 10000
     for e in range(start_epoch, config['other']['nepoch']):
         torch.cuda.empty_cache()
@@ -63,16 +64,11 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
 
             optimizer.zero_grad()
 
-            # t1 = time.time()
-
             model_outputs = model(model_input, indices)
 
             loss_output = loss(model_outputs, ground_truth, e)
             total_loss = loss_output['total_loss']
             total_loss.backward()
-
-            # t2 = time.time()
-            # print(f'total time {t2 - t1}s')
 
             '''gradient clip'''
             torch.nn.utils.clip_grad_norm(parameters=model.parameters(), max_norm=0.7, norm_type=2)
@@ -88,9 +84,9 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
             psnr = get_psnr(model_outputs['rgb_values'], ground_truth['rgb'].cuda().reshape(-1,3))
             msg = '{:0>8},[epoch {}] ({}/{}): total_loss = {}, rgb_loss = {}, eikonal_loss = {}, depth_loss = {}, normal_l1 = {}, normal_cos = {}, ray_mask_loss = {}, instance_mask_loss = {}, sdf_loss = {}, vis_sdf_loss = {}, psnr = {}, bete={}, alpha={}'.format(
                     str(datetime.timedelta(seconds=round(time.time() - start_t))),
-                    e, 
+                    e,
                     batch_id + 1,
-                    len(train_loader), 
+                    len(train_loader),
                     total_loss.item(),
                     loss_output['rgb_loss'].item(),
                     loss_output['eikonal_loss'].item(),
@@ -119,13 +115,13 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
             tb_logger.add_scalar('Loss/sdf_loss', loss_output['sdf_loss'].item(), iter)
             tb_logger.add_scalar('Loss/vis_sdf_loss', loss_output['vis_sdf_loss'].item(), iter)
             tb_logger.add_scalar('Loss/grad_norm', total_norm, iter)
-            
+
             tb_logger.add_scalar('Statistics/beta', model.module.density.get_beta().item(), iter)
             tb_logger.add_scalar('Statistics/alpha', 1. / model.module.density.get_beta().item(), iter)
             tb_logger.add_scalar('Statistics/psnr', psnr.item(), iter)
             current_lr = optimizer.state_dict()['param_groups'][0]['lr']
             tb_logger.add_scalar("train/lr", current_lr, iter)
-                
+
             iter += 1
 
         # after model_save_interval epoch, evaluate the model
@@ -156,9 +152,9 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
                 psnr = get_psnr(model_outputs['rgb_values'], ground_truth['rgb'].cuda().reshape(-1,3))
                 msg = 'Validation {:0>8},[epoch {}] ({}/{}): total_loss = {}, rgb_loss = {}, eikonal_loss = {}, depth_loss = {}, normal_l1 = {}, normal_cos = {}, ray_mask_loss = {}, instance_mask_loss = {}, sdf_loss = {}, vis_sdf_loss = {}, psnr = {}, bete={}, alpha={}'.format(
                     str(datetime.timedelta(seconds=round(time.time() - start_t))),
-                    e, 
+                    e,
                     batch_id + 1,
-                    len(test_loader), 
+                    len(test_loader),
                     total_loss.item(),
                     loss_output['rgb_loss'].item(),
                     loss_output['eikonal_loss'].item(),
@@ -182,7 +178,7 @@ def Recon_trainer(cfg,model,loss,optimizer,scheduler,train_loader,test_loader,de
                         eval_loss_info[key] += torch.mean(loss_output[key]).item()
 
                 eval_loss += total_loss.item()
-            
+
             avg_eval_loss = eval_loss / (batch_id + 1)
             for key in eval_loss_info:
                 eval_loss_info[key] = eval_loss_info[key] / (batch_id + 1)

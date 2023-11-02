@@ -40,7 +40,6 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
     # for evaluation, align InstPIFu size
     bbox_scale_value = 2.0 / (2.0 - ground_truth['voxel_padding'][0])
 
-
     meshes = []
     for i in range(N):
         for j in range(N):
@@ -98,13 +97,13 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
                 for pid, pts in enumerate(points_pyramid):
                     coarse_N = pts.shape[-1]
                     pts = pts.reshape(3, -1).permute(1, 0).contiguous()
-                    
-                    if mask is None:    
+
+                    if mask is None:
                         if eval_gt:
                             pts_sdf = evaluate_gt(pts, ground_truth)
                         else:
                             pts_sdf = evaluate(pts)
-                    else:                    
+                    else:
                         mask = mask.reshape(-1)
                         pts_to_eval = pts[mask]
                         #import pdb; pdb.set_trace()
@@ -145,11 +144,11 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
                     # print(np.array([x_min, y_min, z_min]))
                     # print(verts.min(), verts.max())
                     verts = verts + np.array([x_min, y_min, z_min])     # in cube coords
-                    
+
                     if not export_color_mesh:
                         # for evaluation
                         verts = verts * bbox_scale_value.detach().cpu().numpy()
-                    
+
                     meshcrop = trimesh.Trimesh(verts, faces, normals)
 
                     #meshcrop.export(f"{i}_{j}_{k}.ply")
@@ -161,7 +160,7 @@ def get_surface_sliding(path, epoch, model, img, intrinsics, extrinsics, model_i
         return combined
     else:
         combined.export('{0}/surface_{1}.ply'.format(path, epoch), 'ply')    
-        
+
 
 def plot_normal_maps(normal_maps, ground_true, path, epoch, img_res, indices, ray_mask):
 
@@ -187,8 +186,6 @@ def plot_normal_maps(normal_maps, ground_true, path, epoch, img_res, indices, ra
     tensor = tensor.transpose(1, 2, 0)
     scale_factor = 255
     tensor = (tensor * scale_factor).astype(np.uint8)
-
-    # tensor[971:1171,357:450] = [0,0,0]
 
     img = Image.fromarray(tensor)
     return img, normal_maps
@@ -241,7 +238,6 @@ def plot_depth_maps(depth_maps, ground_true, path, epoch, img_res, indices, ray_
     ray_mask_map = ray_mask_map.convert('L')
     depth_maps.putalpha(ray_mask_map)
 
-
     ground_true = ground_true.numpy()
 
     # depth normalize
@@ -252,7 +248,6 @@ def plot_depth_maps(depth_maps, ground_true, path, epoch, img_res, indices, ray_
     ground_true = (ground_true * 150).astype(np.uint8)
     ground_true = Image.fromarray(ground_true)
     ground_true = ground_true.convert('RGB')
-
 
     return ground_true, depth_maps
 

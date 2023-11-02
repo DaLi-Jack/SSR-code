@@ -154,8 +154,8 @@ class ResNet(nn.Module):
 
         return x
 
-class ResNet_small_stride(nn.Module):
 
+class ResNet_small_stride(nn.Module):
     def __init__(self, block, layers, input_channels=3):
         self.inplanes = 64
         super(ResNet_small_stride, self).__init__()
@@ -211,6 +211,7 @@ class ResNet_small_stride(nn.Module):
         x = x.view(x.size(0), -1)
 
         return x
+
 def resnet18_small_stride(pretrained=False, **kwargs):
     """Constructs a ResNet-18 model.
 
@@ -237,7 +238,6 @@ def resnet18(pretrained=False, **kwargs):
         model.load_state_dict(torch.load(model_path), strict=False)
     return model
 
-
 def resnet34(pretrained=False, **kwargs):
     """Constructs a ResNet-34 model.
 
@@ -250,7 +250,6 @@ def resnet34(pretrained=False, **kwargs):
         model_path = './initmodel/resnet34-333f7ec4.pth'
         model.load_state_dict(torch.load(model_path), strict=False)
     return model
-
 
 def resnet50(pretrained=False, **kwargs):
     """Constructs a ResNet-50 model.
@@ -266,7 +265,6 @@ def resnet50(pretrained=False, **kwargs):
         model.load_state_dict(torch.load(model_path), strict=False)
     return model
 
-
 def resnet101(pretrained=False, **kwargs):
     """Constructs a ResNet-101 model.
 
@@ -279,6 +277,7 @@ def resnet101(pretrained=False, **kwargs):
         model_path = './initmodel/resnet101_v2.pth'
         model.load_state_dict(torch.load(model_path), strict=False)
     return model
+
 
 class ResNet_Full(ResNet):
     def __init__(self, block, layers, num_classes=1000, input_channels=3):
@@ -313,7 +312,6 @@ def resnet18_full(pretrained=False, **kwargs):
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
     return model
-
 
 def resnet152(pretrained=False, **kwargs):
     """Constructs a ResNet-152 model.

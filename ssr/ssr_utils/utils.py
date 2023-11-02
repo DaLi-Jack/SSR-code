@@ -1,6 +1,7 @@
 import os
-import urllib
 
+import numpy as np
+import urllib
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
@@ -17,6 +18,7 @@ def repeat_interleave(input, repeats, dim=0):
     output = input.unsqueeze(1).expand(-1, repeats, *input.shape[1:])
     return output.reshape(-1, *input.shape[1:])
 
+
 def read_obj_point(obj_path):
     with open(obj_path, 'r') as f:
         content_list = f.readlines()
@@ -26,6 +28,7 @@ def read_obj_point(obj_path):
                 point[i] = float(point[i])
         return np.array(point_list)
 
+
 def write_obj_point(points,obj_path):
     with open(obj_path,'w') as f:
         for i in range(points.shape[0]):
@@ -33,6 +36,7 @@ def write_obj_point(points,obj_path):
             write_line="v %.4f %.4f %.4f\n"%(point[0],point[1],point[2])
             f.write(write_line)
     return
+
 
 def load_checkpoint(fpath, model):
     ckpt = torch.load(fpath, map_location='cpu')
@@ -53,7 +57,6 @@ def load_checkpoint(fpath, model):
             k_ = k.replace('adaptive_bins_layer.embedding_conv.',
                            'adaptive_bins_layer.conv3x3.')
             modified[k_] = v
-            # del load_dict[k]
 
         elif k.startswith('adaptive_bins_layer.patch_transformer.embedding_encoder'):
 
@@ -70,10 +73,12 @@ def load_checkpoint(fpath, model):
     model.load_state_dict(modified)
     return model
 
+
 def worker_init_fn(worker_id):
     random_data = os.urandom(4)
     base_seed = int.from_bytes(random_data, byteorder="big")
     np.random.seed(base_seed + worker_id)
+
 
 class CheckpointIO(object):
     '''
@@ -269,6 +274,7 @@ class CheckpointIO(object):
 
         return scalars
 
+
 def get_optimizer(config, net):
     '''
     get optimizer for networks
@@ -329,6 +335,7 @@ def load_scheduler(config,optimizer,train_loader):
     
     return scheduler
 
+
 def load_device(cfg):
     '''
     load device settings
@@ -343,6 +350,7 @@ def load_device(cfg):
         cfg.log_string('CPU mode is on.')
         return torch.device("cpu")
 
+
 def get_model(cfg,device):
     if cfg['method']=="ssr":
         from ssr.model.network import SSRNet
@@ -354,6 +362,7 @@ def get_model(cfg,device):
         model.encoder.eval()
     return model
 
+
 def get_loss(cfg, mode):
     if cfg['method']=="ssr":
         from ssr.model.loss import MonoSDFLoss
@@ -361,6 +370,7 @@ def get_loss(cfg, mode):
     else:
         raise NotImplementedError
     return loss
+
 
 def get_dataloader(cfg,mode):
     if cfg['data']['dataset'] == 'FRONT3D':
@@ -375,6 +385,7 @@ def get_dataloader(cfg,mode):
     else:
         raise NotImplementedError
     return dataloader
+
 
 def get_trainer(config):
     if config["method"]=="ssr":

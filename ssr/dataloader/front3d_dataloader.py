@@ -13,6 +13,7 @@ from tqdm import tqdm
 from utils.sdf_util import *
 from utils.rend_util import load_rgb
 
+
 category_label_mapping = {
     "table": 0, "sofa": 1, "cabinet": 2, "night_stand": 3,
     "chair": 4, "bookshelf": 5, "bed": 6, "desk": 7, "dresser": 8
