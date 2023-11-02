@@ -8,9 +8,6 @@ import torch.nn.functional as F
 import functools
 import numpy as np
 
-import os
-import random
-
 
 def init_weights(net, init_type='normal', init_gain=0.02):
     """Initialize network weights.
