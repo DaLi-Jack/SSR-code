@@ -68,7 +68,8 @@ Please download our [pre-trained model](https://drive.google.com/drive/folders/1
 ```bash
 # NOTE: set show_rendering=False
 # We use 4xA100-80GB gpus to train our model, if you want to reproduce our model, 
-# please set gpu_ids='0,1,2,3', batch_size.train=96, batch_size.val=16.
+# please set gpu_ids='0,1,2,3', batch_size.train=96, batch_size.val=16 for 3D-FRONT dataset.
+# and for Pix3D dataset, batch size can be bigger, e.g. batch_size.train=128, batch_size.val=64.
 
 # for 3D-FRONT dataset
 python train.py --config configs/train_front3d.yaml
