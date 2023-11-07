@@ -19,9 +19,9 @@ device:
 data:
   dataset: SUNRGBD
   img_res: [484, 648]                   # dataset image resolution [H, W], FRONT [484, 648], Replica [512, 512]
-  data_path: data/SUNRGBD
+  data_path: data/SUNRGBD/raw_data
   split_dir: ./dataset
-  sdf_path: /home/newdisk/merge-data
+  sdf_path: 
   train_class_name: ['desk', 'dresser', 'sofa', 'bed', 'bookshelf', 'cabinet', 'desk', 'dresser', 'chair', 'night_stand', 'table', 'desk', 'dresser']
   test_class_name: 'scene_769'
   load_dynamic: True                    # True:load the data dynamically, False:store them in the memory firstly
@@ -43,7 +43,7 @@ data:
   bdb2d_filter: True                    # use object bdb 2d filter image
   soft_pixels: 10                        # expand bdb 2d coefficient
   use_pred_pose: True
-  pred_pose_path: /home/newdisk/BigData/sunrgbd_det_results/visualization
+  pred_pose_path: data/SUNRGBD/sunrgbd_det_results
 
 optimizer:
   type: Adam
