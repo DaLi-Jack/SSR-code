@@ -9,14 +9,35 @@ import time
 import subprocess
 from joblib import Parallel, delayed, parallel_backend
 import yaml
+import scipy
 
 sys.path.append(os.getcwd())
 from external.pyTorchChamferDistance.chamfer_distance import ChamferDistance
-from external.ldif.inference.metrics import f_score
 import multiprocessing as mp
 dist_chamfer=ChamferDistance()
 
 from ssr.ssr_utils.network_utils import fix_random_seed
+
+OCCNET_FSCORE_EPS = 1e-09
+
+def percent_below(dists, thresh):
+  return np.mean((dists**2 <= thresh).astype(np.float32)) * 100.0
+
+def f_score(a_to_b, b_to_a, thresh):
+  precision = percent_below(a_to_b, thresh)
+  recall = percent_below(b_to_a, thresh)
+
+  return (2 * precision * recall) / (precision + recall + OCCNET_FSCORE_EPS)
+def pointcloud_neighbor_distances_indices(source_points, target_points):
+  target_kdtree = scipy.spatial.cKDTree(target_points)
+  distances, indices = target_kdtree.query(source_points, workers=-1)
+  return distances, indices
+def fscore(points1,points2,tau=0.002):
+  """Computes the F-Score at tau between two meshes."""
+  dist12, _ = pointcloud_neighbor_distances_indices(points1, points2)
+  dist21, _ = pointcloud_neighbor_distances_indices(points2, points1)
+  f_score_tau = f_score(dist12, dist21, tau)
+  return f_score_tau
 
 
 class Evaluate:
@@ -30,7 +51,6 @@ class Evaluate:
         self.cmd_app = './external/ldif/gaps/bin/x86_64/mshalign'
         self.loginfo = []
         self.get_files()
-        # self.tqbar = tqdm(total=len(self.split), desc='ssr evaluate:')
 
         self.render = render
 
@@ -60,12 +80,13 @@ class Evaluate:
     def calculate_cd(self, pred, label):
         pred_sample_points=pred.sample(10000)
         gt_sample_points=label.sample(10000)
+        fst=fscore(pred_sample_points,gt_sample_points)
+
         pred_sample_gpu=torch.from_numpy(pred_sample_points).float().cuda().unsqueeze(0)
         gt_sample_gpu=torch.from_numpy(gt_sample_points).float().cuda().unsqueeze(0)
         dist1,dist2=dist_chamfer(gt_sample_gpu,pred_sample_gpu)[:2]
-        f = f_score(dist1.detach().cpu().numpy(), dist2.detach().cpu().numpy(), 0.002)
         cd_loss=torch.mean(dist1)+torch.mean(dist2)
-        return cd_loss.item()*1000, f
+        return cd_loss.item()*1000, fst
 
     def get_result(self):
         total_cd = 0

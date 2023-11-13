@@ -108,6 +108,12 @@ python inference_rot_angle.py --config configs/train_front3d_fusion.yaml
 ```
 
 ## Evaluation
+For evaluation, gaps is required to be installed for conduct ICP alignment. Run the following commands to install gaps:
+```bash
+cd external
+bash build_gaps.sh
+```
+run the following commands for evaluation:
 ```bash
 # NOTE: set eval.export_mesh=True, eval.export_color_mesh=False
 

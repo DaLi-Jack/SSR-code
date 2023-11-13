@@ -132,5 +132,4 @@ dmypy.json
 # mycode
 data/
 output/
-external/
 .vscode/
