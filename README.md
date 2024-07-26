@@ -41,7 +41,7 @@ pip install -r requirements.txt
 ```
 
 ## Data
-Please download the preprocessed [data](https://drive.google.com/drive/folders/1iZNnF2nRm5dnvtuW06qubmncfYfO9f6d?usp=drive_link) and unzip in the `data` folder. The resulting folder structure should be:
+Please download the preprocessed [data](https://drive.google.com/drive/folders/0B03EA5z0iyntfjlabzBYUzBrWXljdW9lLWZ5STB4VnZya2ROX1EtbFhPcjJEZU1aZXg5VVE?resourcekey=0-q4NP4IjcLYK_Js9Xc4ycwQ&usp=drive_link) and unzip in the `data` folder. The resulting folder structure should be:
 ```
 └── SSR-code
   └── data
@@ -50,10 +50,10 @@ Please download the preprocessed [data](https://drive.google.com/drive/folders/1
     ├── Pix3D
     ├── SUNRGBD
 ```
-Since the full FRONT3D dataset is large, we pick some demo data from the test set, namely **[FRONT3D-demo](https://drive.google.com/file/d/1rW048ofKQxwp9535gLuH1lu6VfXNp6sK/view?usp=drive_link)**, to demonstrate the results of the method.
+Since the full FRONT3D dataset is large, we pick some demo data from the test set, namely **[FRONT3D-demo](https://drive.google.com/file/d/1izjRhYlx7grdVGTJhaY-1Wk1LIlx-hkB/view?usp=drive_link)**, to demonstrate the results of the method.
 
 ## Checkpoints
-Please download our [pre-trained model](https://drive.google.com/drive/folders/1tbnvxYkfhlKLNgo2ZJuBh-FFjYKAqjro?usp=drive_link) and unzip in the `output` folder, the resulting folder structure should be:
+Please download our [pre-trained model](https://drive.google.com/drive/folders/0B03EA5z0iyntfldWaURpdGJnaXpjek1sUnZhc0laelUtTWVNUXlCX2oxUnlVWWF6LWNjZk0?resourcekey=0-X7T14-vtK0SOSntSC6mqZw&usp=drive_link) and unzip in the `output` folder, the resulting folder structure should be:
 ```
 └── SSR-code
   └── output
